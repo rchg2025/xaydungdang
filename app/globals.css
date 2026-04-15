@@ -2698,3 +2698,29 @@ input, select, textarea, button {
   max-width: 720px !important;
   width: 95vw !important;
 }
+
+
+/* =============================================
+   FIX: Select dropdown dark mode
+   ============================================= */
+
+.process-step-select {
+  background-color: #1a1a2e;
+  color: #e2e8f0;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  font-size: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+.process-step-select option {
+  background-color: #1a1a2e;
+  color: #e2e8f0;
+}
+
+select,
+.form-select {
+  color-scheme: dark;
+}
