@@ -253,7 +253,7 @@ export default function AdminPage() {
 
         {/* Footer */}
         <footer style={{ textAlign: 'center', marginTop: '3rem', padding: '1.5rem 0', borderTop: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
-          © 2025 Hệ Thống Quản Lý Quy Trình Kết Nạp Đảng — Trang Quản Trị
+          © 2025 Xây dựng Đảng — Đảng bộ Phường Chánh Hưng. Phát triển bởi <a href="https://rongcon.net" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)'}}>Rồng Con HG</a>
         </footer>
       </div>
     </>

@@ -272,7 +272,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="footer">
-        <p>© 2025 Xây dựng Đảng — Đảng bộ Phường Chánh Hưng, TP.HCM. Phát triển bởi <a href="#">RCHG 2025</a></p>
+        <p>© 2025 Xây dựng Đảng — Đảng bộ Phường Chánh Hưng, TP.HCM. Phát triển bởi <a href="https://rongcon.net" target="_blank" rel="noopener noreferrer">Rồng Con HG</a></p>
       </footer>
     </>
   );
