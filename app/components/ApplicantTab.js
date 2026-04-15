@@ -246,7 +246,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
                       <td style={{ fontSize: 'var(--text-xs)' }}>{a.chiBoDangBo}</td>
                       <td>
                         {isCancelled ? (
-                          <span className="status-badge status-huy_ho_so">✕ Hủy</span>
+                          <span className="status-badge status-huy_ho_so">✕ Hồ sơ bị từ chối</span>
                         ) : (
                           <div className="step-progress-cell">
                             <span className="status-badge status-dang_xu_ly">

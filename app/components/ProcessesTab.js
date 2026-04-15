@@ -86,7 +86,7 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
                     <span>🪪 {a.cccd}</span>
                     <span>🏛️ {a.chiBoDangBo}</span>
                     {isCancelled ? (
-                      <span className="status-badge status-huy_ho_so">✕ Đã từ chối</span>
+                      <span className="status-badge status-huy_ho_so">✕ Hồ sơ bị từ chối</span>
                     ) : (
                       <span className="status-badge status-dang_xu_ly">Bước {step}/{a.quyTrinh.length} · {progress}%</span>
                     )}

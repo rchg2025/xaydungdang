@@ -70,7 +70,7 @@ export default function DashboardTab({ applicants, stats }) {
           <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', boxShadow: '0 0 0 1px rgba(239,68,68,0.2)' }}>❌</div>
           <div className="stat-card-body">
             <div className="stat-card-value" style={{ color: '#ef4444' }}>{stats.daHuy}</div>
-            <div className="stat-card-label">Đã từ chối</div>
+            <div className="stat-card-label">Hồ sơ bị từ chối</div>
           </div>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function DashboardTab({ applicants, stats }) {
                   <td style={{ fontSize: 'var(--text-xs)' }}>{a.chiBoDangBo}</td>
                   <td>
                     {isCancelled ? (
-                      <span className="status-badge status-huy_ho_so">✕ Từ chối</span>
+                      <span className="status-badge status-huy_ho_so">✕ Hồ sơ bị từ chối</span>
                     ) : (
                       <span className="status-badge status-dang_xu_ly">
                         Bước {step}/{a.quyTrinh.length}
