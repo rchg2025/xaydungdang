@@ -7,6 +7,7 @@ import {
   getStatistics,
   initializeData,
   getChiBoList,
+  syncAllApplicantsWithTemplate,
 } from '../lib/store';
 import {
   login,
@@ -47,6 +48,7 @@ export default function AdminPage() {
   useEffect(() => {
     initializeData();
     initializeUsers();
+    syncAllApplicantsWithTemplate(); // đồng bộ hồ sơ cũ với template hiện tại
     const user = getCurrentUser();
     if (user) setCurrentUser(user);
   }, []);

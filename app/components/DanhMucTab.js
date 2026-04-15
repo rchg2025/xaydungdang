@@ -11,6 +11,7 @@ import {
   updateProcessStepTemplate,
   deleteProcessStepTemplate,
   moveProcessStepTemplate,
+  syncAllApplicantsWithTemplate,
 } from '../lib/store';
 
 // =============================================
@@ -194,6 +195,18 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
                 Quản lý các bước quy trình mẫu. Thứ tự và tên bước sẽ được áp dụng khi tạo hồ sơ mới.
               </p>
             </div>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                syncAllApplicantsWithTemplate();
+                loadSteps();
+                if (onReload) onReload();
+                onAlert({ type: 'success', message: 'Đã đồng bộ tất cả hồ sơ theo danh mục hiện tại!' });
+              }}
+              title="Đồng bộ ngay toàn bộ hồ sơ theo danh mục"
+            >
+              🔄 Đồng bộ tất cả hồ sơ
+            </button>
           </div>
 
           {/* Add form */}
