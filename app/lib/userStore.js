@@ -227,3 +227,30 @@ export function getAdminEmail() {
   const admin = users.find((u) => u.role === ROLES.ADMIN && u.active);
   return admin ? admin.email : '';
 }
+
+// ---- Find user by email (for forgot password) ----
+export function findUserByEmail(email) {
+  if (typeof window === 'undefined') return null;
+  initializeUsers();
+  const users = getUsers();
+  const user = users.find((u) => u.email && u.email.toLowerCase() === email.toLowerCase() && u.active);
+  if (!user) return null;
+  const { password, ...safe } = user;
+  return safe;
+}
+
+// ---- Reset password by email (called after OTP verified) ----
+export function resetPasswordByEmail(email, newPassword) {
+  if (typeof window === 'undefined') return false;
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error('Mật khẩu mới phải có ít nhất 6 ký tự!');
+  }
+
+  const users = getUsers();
+  const userIdx = users.findIndex((u) => u.email && u.email.toLowerCase() === email.toLowerCase() && u.active);
+  if (userIdx === -1) throw new Error('Không tìm thấy tài khoản với email này!');
+
+  users[userIdx].password = newPassword;
+  saveUsers(users);
+  return true;
+}

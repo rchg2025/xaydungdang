@@ -2967,3 +2967,268 @@ select,
 @media (max-width: 640px) {
   .search-fields { grid-template-columns: 1fr; }
 }
+
+/* ==============================================
+   FORGOT PASSWORD — OTP Flow
+   ============================================== */
+
+/* ---- Panel wrapper ---- */
+.forgot-otp-panel {
+  animation: fadeInUp 0.3s ease;
+}
+
+/* ---- Stepper ---- */
+.otp-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.otp-stepper::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 80px);
+  height: 2px;
+  background: var(--color-border);
+  z-index: 0;
+}
+
+.otp-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.otp-step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  transition: all 0.3s ease;
+}
+
+.otp-step.active .otp-step-circle {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  border-color: var(--color-primary);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(196, 30, 58, 0.15);
+  transform: scale(1.1);
+}
+
+.otp-step.done .otp-step-circle {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #10b981;
+  color: white;
+}
+
+.otp-step-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-align: center;
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+
+.otp-step.active .otp-step-label {
+  color: var(--color-primary-light);
+}
+
+.otp-step.done .otp-step-label {
+  color: #34d399;
+}
+
+/* ---- Form ---- */
+.otp-form {
+  animation: fadeInUp 0.25s ease;
+}
+
+/* ---- Header ---- */
+.otp-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.otp-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  display: block;
+  animation: bounceIn 0.4s ease;
+}
+
+.otp-header h3 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 6px;
+}
+
+.otp-header p {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ---- OTP digit input ---- */
+.otp-input-field {
+  text-align: center !important;
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  letter-spacing: 12px !important;
+  font-family: 'Courier New', monospace !important;
+  padding: 14px !important;
+  border-color: var(--color-primary) !important;
+  background: rgba(196, 30, 58, 0.04) !important;
+}
+
+.otp-input-field:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1) !important;
+}
+
+/* Hint text below OTP input */
+.otp-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 6px 0 0;
+}
+
+/* ---- Messages ---- */
+.otp-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+  animation: fadeInUp 0.2s ease;
+}
+
+.otp-msg span {
+  flex-shrink: 0;
+}
+
+.otp-msg-error {
+  background: var(--color-danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--color-danger);
+}
+
+.otp-msg-success {
+  background: var(--color-success-bg);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--color-success);
+}
+
+/* ---- Resend link ---- */
+.otp-resend {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin: 1rem 0 0;
+}
+
+.otp-resend .link-btn {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.otp-resend .link-btn:disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* ---- Loading spinner text ---- */
+.otp-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  animation: pulse 1.2s ease infinite;
+}
+
+/* ---- Password input wrapper ---- */
+.pwd-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pwd-input-wrap .form-input {
+  padding-right: 44px !important;
+}
+
+.pwd-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+  color: var(--color-text-muted);
+  line-height: 1;
+  transition: opacity 0.2s;
+}
+
+.pwd-toggle-btn:hover {
+  opacity: 0.7;
+}
+
+/* ---- Password match/mismatch indicators ---- */
+.pwd-match {
+  font-size: 12px;
+  color: #34d399;
+  margin: 4px 0 0;
+  animation: fadeInUp 0.2s ease;
+}
+
+.pwd-mismatch {
+  font-size: 12px;
+  color: var(--color-danger);
+  margin: 4px 0 0;
+  animation: fadeInUp 0.2s ease;
+}
+
+/* ---- Animation for OTP icon ---- */
+@keyframes bounceIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 480px) {
+  .otp-stepper::before { display: none; }
+  .otp-step-label { font-size: 10px; }
+  .otp-step-circle { width: 32px; height: 32px; font-size: 12px; }
+  .otp-input-field { font-size: 22px !important; letter-spacing: 8px !important; }
+}
+
