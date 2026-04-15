@@ -56,14 +56,5 @@ export const DEFAULT_PROCESS_STEPS = [
   { soThuTu: 10, tenQuyTrinh: 'Công nhận Đảng viên chính thức' },
 ];
 
-// Danh sách Chi bộ/Đảng bộ mẫu
-export const CHI_BO_LIST = [
-  { ten: 'Chi bộ Trường THPT Nguyễn Trãi', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
-  { ten: 'Chi bộ Trường THCS Lê Lợi', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
-  { ten: 'Chi bộ Phường Tân Định', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
-  { ten: 'Chi bộ Xã Bình An', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
-  { ten: 'Đảng bộ Quận 1', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
-  { ten: 'Đảng bộ Huyện Bình Chánh', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
-  { ten: 'Chi bộ Công ty CP Xây dựng Miền Nam', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
-  { ten: 'Chi bộ Bệnh viện Đa khoa Trung ương', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
-];
+// Danh sách Chi bộ/Đảng bộ — giờ quản lý hoàn toàn qua database
+// (Không còn hardcode ở đây)
