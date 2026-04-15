@@ -2,8 +2,8 @@
 // Email Service - Gmail via Next.js API Route
 // =============================================
 
-import { processTemplate, TEMPLATE_TYPES } from './emailTemplateStore';
-import { fetchChiBoList } from './apiClient';
+import { processTemplateData, TEMPLATE_TYPES } from './emailTemplateStore';
+import { fetchChiBoList, fetchEmailTemplates } from './apiClient';
 
 // =============================================
 // SEND EMAIL qua API Route /api/send-email
@@ -13,7 +13,10 @@ export async function sendEmail(templateType, recipientEmail, data = {}) {
     throw new Error('Người nhận chưa có email!');
   }
 
-  const { subject, body } = processTemplate(templateType, data);
+  // Retrieve from database API rather than client-side localStorage
+  const templates = await fetchEmailTemplates();
+  const templateObj = templates[templateType];
+  const { subject, body } = processTemplateData(templateObj, data);
 
   const response = await fetch('/api/send-email', {
     method: 'POST',

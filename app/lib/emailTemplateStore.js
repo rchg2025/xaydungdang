@@ -181,11 +181,12 @@ export function saveEmailJSConfig(config) {
   localStorage.setItem(EMAILJS_CONFIG_KEY, JSON.stringify(config));
 }
 
-// =============================================
-// PROCESS TEMPLATE CONTENT
-// =============================================
 export function processTemplate(templateType, data = {}) {
   const template = getTemplate(templateType);
+  return processTemplateData(template, data);
+}
+
+export function processTemplateData(template, data = {}) {
   const now = new Date();
 
   const vars = {
@@ -200,8 +201,8 @@ export function processTemplate(templateType, data = {}) {
     '{{nguoiGui}}': data.nguoiGui || 'Quản trị viên',
   };
 
-  let subject = template.subject;
-  let body = template.body;
+  let subject = template.subject || '';
+  let body = template.body || '';
 
   Object.entries(vars).forEach(([key, value]) => {
     subject = subject.replaceAll(key, value);
