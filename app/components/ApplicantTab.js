@@ -443,7 +443,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
                   <select className="form-select" required
                     value={formData.chiBoDangBo} onChange={e => setFormData({ ...formData, chiBoDangBo: e.target.value })}>
                     <option value="">-- Chọn chi bộ / đảng bộ --</option>
-                    {chiBoList.map(cb => <option key={cb} value={cb}>{cb}</option>)}
+                    {chiBoList.map(cb => <option key={cb.ten} value={cb.ten}>{cb.ten}</option>)}
                   </select>
                 </div>
               </div>

@@ -323,7 +323,18 @@ export function getChiBoList() {
   if (typeof window === 'undefined') return CHI_BO_LIST;
   try {
     const data = localStorage.getItem(CHI_BO_STORAGE_KEY);
-    if (data) return JSON.parse(data);
+    if (data) {
+      const parsed = JSON.parse(data);
+      // Migration: chuyển dữ liệu cũ (string[]) sang object[]
+      if (parsed.length > 0 && typeof parsed[0] === 'string') {
+        const migrated = parsed.map((s) => ({
+          ten: s, biThu: '', chanhVanPhong: '', soDienThoai: '', email: '',
+        }));
+        localStorage.setItem(CHI_BO_STORAGE_KEY, JSON.stringify(migrated));
+        return migrated;
+      }
+      return parsed;
+    }
     // Khởi tạo lần đầu từ constants
     localStorage.setItem(CHI_BO_STORAGE_KEY, JSON.stringify(CHI_BO_LIST));
     return CHI_BO_LIST;
@@ -339,31 +350,37 @@ function saveChiBoList(list) {
 }
 
 // ---- Thêm chi bộ mới ----
-export function addChiBo(tenChiBo) {
+export function addChiBo({ ten, biThu = '', chanhVanPhong = '', soDienThoai = '', email = '' }) {
   const list = getChiBoList();
-  const trimmed = tenChiBo.trim();
+  const trimmed = (ten || '').trim();
   if (!trimmed) throw new Error('Tên chi bộ không được để trống!');
-  if (list.includes(trimmed)) throw new Error('Chi bộ/Đảng bộ này đã tồn tại!');
-  list.push(trimmed);
+  if (list.some((cb) => cb.ten === trimmed)) throw new Error('Chi bộ/Đảng bộ này đã tồn tại!');
+  list.push({ ten: trimmed, biThu: biThu.trim(), chanhVanPhong: chanhVanPhong.trim(), soDienThoai: soDienThoai.trim(), email: email.trim() });
   saveChiBoList(list);
   return list;
 }
 
-// ---- Cập nhật tên chi bộ ----
-export function updateChiBo(oldName, newName) {
+// ---- Cập nhật chi bộ ----
+export function updateChiBo(oldName, updates) {
   const list = getChiBoList();
-  const trimmedNew = newName.trim();
-  if (!trimmedNew) throw new Error('Tên chi bộ không được để trống!');
-  const idx = list.indexOf(oldName);
+  const newName = (updates.ten || '').trim();
+  if (!newName) throw new Error('Tên chi bộ không được để trống!');
+  const idx = list.findIndex((cb) => cb.ten === oldName);
   if (idx === -1) throw new Error('Không tìm thấy chi bộ!');
-  if (list.includes(trimmedNew) && trimmedNew !== oldName) throw new Error('Tên chi bộ đã tồn tại!');
-  list[idx] = trimmedNew;
+  if (list.some((cb) => cb.ten === newName && cb.ten !== oldName)) throw new Error('Tên chi bộ đã tồn tại!');
+  list[idx] = {
+    ten: newName,
+    biThu: (updates.biThu || '').trim(),
+    chanhVanPhong: (updates.chanhVanPhong || '').trim(),
+    soDienThoai: (updates.soDienThoai || '').trim(),
+    email: (updates.email || '').trim(),
+  };
   saveChiBoList(list);
 
   // Cập nhật tên chi bộ trong tất cả hồ sơ
   const applicants = getAllApplicants();
   applicants.forEach(a => {
-    if (a.chiBoDangBo === oldName) a.chiBoDangBo = trimmedNew;
+    if (a.chiBoDangBo === oldName) a.chiBoDangBo = newName;
   });
   saveAll(applicants);
   return list;
@@ -372,7 +389,7 @@ export function updateChiBo(oldName, newName) {
 // ---- Xóa chi bộ ----
 export function deleteChiBo(tenChiBo) {
   const list = getChiBoList();
-  const idx = list.indexOf(tenChiBo);
+  const idx = list.findIndex((cb) => cb.ten === tenChiBo);
   if (idx === -1) throw new Error('Không tìm thấy chi bộ!');
   list.splice(idx, 1);
   saveChiBoList(list);

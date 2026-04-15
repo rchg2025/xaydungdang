@@ -58,12 +58,12 @@ export const DEFAULT_PROCESS_STEPS = [
 
 // Danh sách Chi bộ/Đảng bộ mẫu
 export const CHI_BO_LIST = [
-  'Chi bộ Trường THPT Nguyễn Trãi',
-  'Chi bộ Trường THCS Lê Lợi',
-  'Chi bộ Phường Tân Định',
-  'Chi bộ Xã Bình An',
-  'Đảng bộ Quận 1',
-  'Đảng bộ Huyện Bình Chánh',
-  'Chi bộ Công ty CP Xây dựng Miền Nam',
-  'Chi bộ Bệnh viện Đa khoa Trung ương',
+  { ten: 'Chi bộ Trường THPT Nguyễn Trãi', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
+  { ten: 'Chi bộ Trường THCS Lê Lợi', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
+  { ten: 'Chi bộ Phường Tân Định', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
+  { ten: 'Chi bộ Xã Bình An', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
+  { ten: 'Đảng bộ Quận 1', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
+  { ten: 'Đảng bộ Huyện Bình Chánh', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
+  { ten: 'Chi bộ Công ty CP Xây dựng Miền Nam', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
+  { ten: 'Chi bộ Bệnh viện Đa khoa Trung ương', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' },
 ];

@@ -3232,3 +3232,78 @@ select,
   .otp-input-field { font-size: 22px !important; letter-spacing: 8px !important; }
 }
 
+/* ==============================================
+   CHI BỘ - Rich form & display
+   ============================================== */
+
+/* ---- Form grid (2 columns) ---- */
+.chibo-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+
+.chibo-form-full {
+  grid-column: 1 / -1;
+}
+
+/* ---- Rich list item ---- */
+.chibo-item-rich {
+  align-items: flex-start !important;
+  padding: 14px 16px !important;
+  min-height: 64px !important;
+}
+
+/* ---- Info block ---- */
+.chibo-info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- Meta chips row ---- */
+.chibo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.chibo-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  background: var(--color-surface-active);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.chibo-meta-chip a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.chibo-meta-chip a:hover {
+  text-decoration: underline;
+}
+
+.chibo-meta-empty {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+  .chibo-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .chibo-form-full {
+    grid-column: 1;
+  }
+}
+
+
