@@ -5,12 +5,9 @@ import {
   TEMPLATE_TYPES,
   TEMPLATE_LABELS,
   TEMPLATE_VARIABLES,
-  getTemplates,
   getTemplate,
   saveTemplate,
   resetTemplate,
-  getEmailJSConfig,
-  saveEmailJSConfig,
   processTemplate,
 } from '../lib/emailTemplateStore';
 import { testEmailConnection } from '../lib/emailService';
@@ -24,11 +21,9 @@ export default function EmailTemplateTab({ onAlert }) {
   const [body, setBody] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-
-  // EmailJS config
-  const [config, setConfig] = useState({ serviceId: '', templateId: '', publicKey: '' });
   const [testEmail, setTestEmail] = useState('');
   const [testing, setTesting] = useState(false);
+  const [showGmailGuide, setShowGmailGuide] = useState(false);
 
   // ---- Load template ----
   useEffect(() => {
@@ -37,11 +32,6 @@ export default function EmailTemplateTab({ onAlert }) {
     setBody(tpl.body);
     setHasChanges(false);
   }, [activeType]);
-
-  // ---- Load EmailJS config ----
-  useEffect(() => {
-    setConfig(getEmailJSConfig());
-  }, []);
 
   // ---- Save template ----
   const handleSave = () => {
@@ -64,13 +54,7 @@ export default function EmailTemplateTab({ onAlert }) {
     onAlert({ type: 'success', message: 'Đã khôi phục template mặc định!' });
   };
 
-  // ---- Save EmailJS config ----
-  const handleSaveConfig = () => {
-    saveEmailJSConfig(config);
-    onAlert({ type: 'success', message: 'Đã lưu cấu hình EmailJS!' });
-  };
-
-  // ---- Test ----
+  // ---- Test send ----
   const handleTest = async () => {
     if (!testEmail.trim()) {
       onAlert({ type: 'error', message: 'Nhập email test!' });
@@ -79,7 +63,7 @@ export default function EmailTemplateTab({ onAlert }) {
     setTesting(true);
     try {
       await testEmailConnection(testEmail.trim());
-      onAlert({ type: 'success', message: 'Gửi email test thành công! Kiểm tra hộp thư.' });
+      onAlert({ type: 'success', message: `✅ Gửi email test thành công đến ${testEmail}! Kiểm tra hộp thư.` });
     } catch (err) {
       onAlert({ type: 'error', message: err.message });
     }
@@ -104,76 +88,101 @@ export default function EmailTemplateTab({ onAlert }) {
 
   return (
     <div className="danhmuc-container">
-      {/* ====== EMAILJS CONFIG ====== */}
+
+      {/* ====== GMAIL CONFIG INFO ====== */}
       <div className="danhmuc-panel" style={{ marginBottom: '1.5rem' }}>
         <div className="danhmuc-panel-header">
-          <h3 className="danhmuc-panel-title">⚙️ Cấu hình EmailJS</h3>
+          <h3 className="danhmuc-panel-title">⚙️ Cấu hình Gmail</h3>
           <p className="danhmuc-panel-desc">
-            Kết nối với <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>EmailJS</a> để gửi email thông báo thật.
-            Tạo tài khoản miễn phí (200 email/tháng).
+            Hệ thống gửi email trực tiếp qua Gmail. Cấu hình tại biến môi trường của server.
           </p>
         </div>
 
-        <div className="email-config-grid">
-          <div className="form-group">
-            <label>Service ID</label>
-            <input
-              type="text" className="form-input"
-              placeholder="service_xxxxxxx"
-              value={config.serviceId}
-              onChange={(e) => setConfig({ ...config, serviceId: e.target.value })}
-            />
+        {/* Status indicator */}
+        <div className="gmail-status-row">
+          <div className="gmail-status-item">
+            <span className="gmail-status-icon">📧</span>
+            <div>
+              <div className="gmail-status-label">Giao thức</div>
+              <div className="gmail-status-value">Gmail SMTP (Nodemailer)</div>
+            </div>
           </div>
-          <div className="form-group">
-            <label>Template ID</label>
-            <input
-              type="text" className="form-input"
-              placeholder="template_xxxxxxx"
-              value={config.templateId}
-              onChange={(e) => setConfig({ ...config, templateId: e.target.value })}
-            />
+          <div className="gmail-status-item">
+            <span className="gmail-status-icon">🔒</span>
+            <div>
+              <div className="gmail-status-label">Bảo mật</div>
+              <div className="gmail-status-value">App Password (không lộ MK chính)</div>
+            </div>
           </div>
-          <div className="form-group">
-            <label>Public Key</label>
-            <input
-              type="text" className="form-input"
-              placeholder="xxxxxxxxxxxxxx"
-              value={config.publicKey}
-              onChange={(e) => setConfig({ ...config, publicKey: e.target.value })}
-            />
+          <div className="gmail-status-item">
+            <span className="gmail-status-icon">📨</span>
+            <div>
+              <div className="gmail-status-label">Giới hạn</div>
+              <div className="gmail-status-value">500 email/ngày (miễn phí)</div>
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '1rem' }}>
-          <button className="btn btn-primary" onClick={handleSaveConfig}>
-            💾 Lưu cấu hình
+        {/* Guide toggle */}
+        <button
+          className="btn btn-secondary"
+          onClick={() => setShowGmailGuide(!showGmailGuide)}
+          style={{ marginTop: '1rem' }}
+        >
+          {showGmailGuide ? '🔼 Ẩn hướng dẫn' : '📖 Hướng dẫn cài đặt Gmail'}
+        </button>
+
+        {showGmailGuide && (
+          <div className="gmail-guide">
+            <div className="gmail-guide-title">📋 Cách lấy Gmail App Password</div>
+            <ol className="gmail-guide-steps">
+              <li>
+                Truy cập <a href="https://myaccount.google.com/security" target="_blank" rel="noopener noreferrer">myaccount.google.com/security</a>
+              </li>
+              <li>Bật <strong>Xác minh 2 bước</strong> (nếu chưa bật)</li>
+              <li>Tìm mục <strong>"Mật khẩu ứng dụng"</strong> → Tạo mới</li>
+              <li>Chọn ứng dụng: <em>Mail</em>, thiết bị: <em>Other</em> → đặt tên → <strong>Tạo</strong></li>
+              <li>Sao chép mật khẩu 16 ký tự được tạo</li>
+            </ol>
+            <div className="gmail-guide-title" style={{ marginTop: '1rem' }}>🖥️ Cài đặt biến môi trường</div>
+            <div className="gmail-guide-env">
+              <div className="gmail-env-row">
+                <span className="gmail-env-key">GMAIL_USER</span>
+                <span className="gmail-env-val">your-email@gmail.com</span>
+              </div>
+              <div className="gmail-env-row">
+                <span className="gmail-env-key">GMAIL_APP_PASSWORD</span>
+                <span className="gmail-env-val">xxxx xxxx xxxx xxxx</span>
+              </div>
+            </div>
+            <div className="danhmuc-info-note" style={{ marginTop: '0.75rem' }}>
+              <span>💡</span>
+              <span>
+                <strong>Local:</strong> Thêm vào file <code>.env.local</code> trong thư mục dự án. &nbsp;
+                <strong>Vercel:</strong> Vào Settings → Environment Variables → thêm 2 biến trên.
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Test connection */}
+        <div className="gmail-test-row">
+          <input
+            type="email"
+            className="form-input"
+            style={{ flex: 1, maxWidth: '300px' }}
+            placeholder="Nhập email để test..."
+            value={testEmail}
+            onChange={(e) => setTestEmail(e.target.value)}
+          />
+          <button
+            className="btn btn-primary"
+            onClick={handleTest}
+            disabled={testing}
+            id="btn-test-email"
+          >
+            {testing ? '⏳ Đang gửi...' : '📤 Gửi email test'}
           </button>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: 1 }}>
-            <input
-              type="email" className="form-input" style={{ maxWidth: '250px' }}
-              placeholder="Email test..."
-              value={testEmail}
-              onChange={(e) => setTestEmail(e.target.value)}
-            />
-            <button
-              className="btn btn-secondary"
-              onClick={handleTest}
-              disabled={testing}
-            >
-              {testing ? '⏳ Đang gửi...' : '📧 Test'}
-            </button>
-          </div>
-        </div>
-
-        <div className="danhmuc-info-note" style={{ marginTop: '0.75rem' }}>
-          <span>ℹ️</span>
-          <span>
-            <strong>Hướng dẫn:</strong> Đăng ký tại emailjs.com → tạo Service (Gmail/Outlook) → tạo Template với các biến:
-            <code style={{ margin: '0 4px' }}>{'{{to_email}}'}</code>
-            <code style={{ margin: '0 4px' }}>{'{{to_name}}'}</code>
-            <code style={{ margin: '0 4px' }}>{'{{subject}}'}</code>
-            <code style={{ margin: '0 4px' }}>{'{{message}}'}</code>
-          </span>
         </div>
       </div>
 
@@ -182,13 +191,13 @@ export default function EmailTemplateTab({ onAlert }) {
         <div className="danhmuc-panel-header">
           <h3 className="danhmuc-panel-title">📝 Soạn Template Email</h3>
           <p className="danhmuc-panel-desc">
-            Chọn loại thông báo và soạn nội dung. Sử dụng biến để tự động điền thông tin.
+            Soạn nội dung mẫu cho từng loại thông báo. Dùng biến để tự động điền thông tin quần chúng.
           </p>
         </div>
 
         {/* Template type tabs */}
         <div className="email-type-tabs">
-          {Object.entries(TEMPLATE_TYPES).map(([key, type]) => (
+          {Object.entries(TEMPLATE_TYPES).map(([, type]) => (
             <button
               key={type}
               className={`email-type-btn ${activeType === type ? 'active' : ''}`}
@@ -240,11 +249,7 @@ export default function EmailTemplateTab({ onAlert }) {
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button
-            className="btn btn-primary"
-            onClick={handleSave}
-            disabled={!hasChanges}
-          >
+          <button className="btn btn-primary" onClick={handleSave} disabled={!hasChanges}>
             💾 Lưu template
           </button>
           <button className="btn btn-secondary" onClick={() => setShowPreview(!showPreview)}>

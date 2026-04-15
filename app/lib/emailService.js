@@ -1,76 +1,72 @@
 // =============================================
-// Email Service - EmailJS Integration
+// Email Service - Gmail via Next.js API Route
 // =============================================
 
-import emailjs from '@emailjs/browser';
-import { getEmailJSConfig, processTemplate } from './emailTemplateStore';
+import { processTemplate } from './emailTemplateStore';
 
 // =============================================
-// SEND EMAIL
+// SEND EMAIL qua API Route /api/send-email
 // =============================================
 export async function sendEmail(templateType, recipientEmail, data = {}) {
-  const config = getEmailJSConfig();
-
-  if (!config.serviceId || !config.templateId || !config.publicKey) {
-    throw new Error(
-      'Chưa cấu hình EmailJS! Vào tab 📧 Email → phần Cấu hình EmailJS để thiết lập.'
-    );
-  }
-
   if (!recipientEmail || !recipientEmail.trim()) {
     throw new Error('Người nhận chưa có email!');
   }
 
   const { subject, body } = processTemplate(templateType, data);
 
-  const templateParams = {
-    to_email: recipientEmail.trim(),
-    to_name: data.hoTen || '',
-    subject: subject,
-    message: body,
-  };
+  const response = await fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: recipientEmail.trim(),
+      toName: data.hoTen || '',
+      subject,
+      message: body,
+    }),
+  });
 
-  try {
-    const result = await emailjs.send(
-      config.serviceId,
-      config.templateId,
-      templateParams,
-      config.publicKey
-    );
-    return { success: true, status: result.status, text: result.text };
-  } catch (err) {
-    throw new Error(
-      `Gửi email thất bại: ${err.text || err.message || 'Lỗi không xác định'}`
-    );
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || 'Gửi email thất bại!');
   }
+
+  return result;
 }
 
 // =============================================
-// TEST CONNECTION
+// TEST - gửi email test đến địa chỉ cho trước
 // =============================================
 export async function testEmailConnection(testEmail) {
-  const config = getEmailJSConfig();
-
-  if (!config.serviceId || !config.templateId || !config.publicKey) {
-    throw new Error('Chưa cấu hình đầy đủ thông tin EmailJS!');
+  if (!testEmail || !testEmail.trim()) {
+    throw new Error('Vui lòng nhập email test!');
   }
 
-  const templateParams = {
-    to_email: testEmail,
-    to_name: 'Test User',
-    subject: 'Test kết nối EmailJS - Hệ thống Kết nạp Đảng',
-    message: 'Đây là email test kết nối. Nếu bạn nhận được email này, cấu hình EmailJS đã đúng!',
-  };
+  const response = await fetch('/api/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: testEmail.trim(),
+      toName: 'Test',
+      subject: '✅ Test kết nối Gmail - Hệ thống Kết nạp Đảng',
+      message: `Xin chào,
 
-  try {
-    const result = await emailjs.send(
-      config.serviceId,
-      config.templateId,
-      templateParams,
-      config.publicKey
-    );
-    return { success: true, status: result.status };
-  } catch (err) {
-    throw new Error(`Test thất bại: ${err.text || err.message}`);
+Đây là email test kết nối từ Hệ thống Quản lý Quy trình Kết nạp Đảng.
+
+Nếu bạn nhận được email này, cấu hình Gmail đã hoạt động thành công! ✅
+
+Thời gian gửi: ${new Date().toLocaleString('vi-VN')}
+
+Trân trọng,
+Hệ thống Kết nạp Đảng`,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || 'Test thất bại!');
   }
+
+  return result;
 }
