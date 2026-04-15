@@ -104,12 +104,13 @@ export default function ProcessTimeline({ quyTrinh, compact = false }) {
                     {STATUS_ICONS[step.trangThai]} {STATUS_LABELS[step.trangThai]}
                   </span>
                 </div>
-                {step.ngayCapNhat && (
+                {(step.ngayCapNhat || step.gioCapNhat) && (
                   <div className="timeline-item-date">
-                    📅 Cập nhật: {new Date(step.ngayCapNhat).toLocaleDateString('vi-VN')}
-                    {step.gioCapNhat && ` lúc ${step.gioCapNhat}`}
+                    📅 {step.gioCapNhat
+                      ? step.gioCapNhat
+                      : new Date(step.ngayCapNhat).toLocaleDateString('vi-VN')}
                     {step.nguoiCapNhat && (
-                      <span className="timeline-updater"> — bởi <strong>{step.nguoiCapNhat}</strong></span>
+                      <span className="timeline-updater"> — 👤 <strong>{step.nguoiCapNhat}</strong></span>
                     )}
                   </div>
                 )}

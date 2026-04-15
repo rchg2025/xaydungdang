@@ -4,19 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   getAllApplicants,
-  addApplicant,
-  updateApplicant,
-  deleteApplicant,
-  updateProcessStep,
   getStatistics,
   initializeData,
-  getCurrentStep,
   getChiBoList,
 } from '../lib/store';
-import {
-  STATUS_LABELS,
-  STATUSES,
-} from '../lib/constants';
 import {
   login,
   logout,
@@ -26,89 +17,67 @@ import {
   getAdminEmail,
   ROLE_LABELS,
 } from '../lib/userStore';
-import { exportApplicantsToXlsx, exportImportTemplate, parseXlsxFile } from '../lib/excelUtils';
-import ProcessTimeline from '../components/ProcessTimeline';
+
+// Tab components
+import DashboardTab from '../components/DashboardTab';
+import ApplicantTab from '../components/ApplicantTab';
+import ProcessesTab from '../components/ProcessesTab';
 import DanhMucTab from '../components/DanhMucTab';
 import UserManagementTab from '../components/UserManagementTab';
 import EmailTemplateTab from '../components/EmailTemplateTab';
 
 // =============================================
-// Admin Page Component
+// Admin Page — Auth shell + Tab routing
 // =============================================
 export default function AdminPage() {
-  const [currentUserState, setCurrentUserState] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
   const [showForgotPwd, setShowForgotPwd] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Shared data
   const [applicants, setApplicants] = useState([]);
   const [stats, setStats] = useState(null);
-  const [alert, setAlert] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [chiBoList, setChiBoList] = useState([]);
-
-  // Pagination
-  const PAGE_SIZE = 10;
-  const [dashPage, setDashPage] = useState(1);
-  const [applicantPage, setApplicantPage] = useState(1);
-
-  // Modal states
-  const [showApplicantModal, setShowApplicantModal] = useState(false);
-  const [showProcessModal, setShowProcessModal] = useState(false);
-  const [editingApplicant, setEditingApplicant] = useState(null);
-  const [selectedApplicant, setSelectedApplicant] = useState(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
-
-  // Import states
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importFile, setImportFile] = useState(null);
-  const [importPreview, setImportPreview] = useState([]);
-  const [importErrors, setImportErrors] = useState([]);
-  const [importLoading, setImportLoading] = useState(false);
-
-  // Form state
-  const [formData, setFormData] = useState({
-    cccd: '', hoTen: '', ngaySinh: '', soDienThoai: '', email: '', chiBoDangBo: '',
-  });
+  const [alert, setAlert] = useState(null);
 
   // ---- Init ----
   useEffect(() => {
     initializeData();
     initializeUsers();
     const user = getCurrentUser();
-    if (user) setCurrentUserState(user);
+    if (user) setCurrentUser(user);
   }, []);
 
-  // ---- Load data when logged in ----
+  // ---- Load data ----
   const loadData = useCallback(() => {
-    const data = getAllApplicants();
-    setApplicants(data);
+    setApplicants(getAllApplicants());
     setStats(getStatistics());
     setChiBoList(getChiBoList());
   }, []);
 
   useEffect(() => {
-    if (currentUserState) loadData();
-  }, [currentUserState, loadData]);
+    if (currentUser) loadData();
+  }, [currentUser, loadData]);
 
   // ---- Auto-hide alerts ----
   useEffect(() => {
     if (alert) {
-      const timer = setTimeout(() => setAlert(null), 4000);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setAlert(null), 4000);
+      return () => clearTimeout(t);
     }
   }, [alert]);
 
-  // ---- Permission helpers ----
-  const userIsAdmin = isAdmin(currentUserState);
+  const userIsAdmin = isAdmin(currentUser);
 
-  // ---- Login ----
+  // ---- Auth ----
   const handleLogin = (e) => {
     e.preventDefault();
     const user = login(usernameInput, passwordInput);
     if (user) {
-      setCurrentUserState(user);
+      setCurrentUser(user);
       setLoginError('');
     } else {
       setLoginError('Tên đăng nhập hoặc mật khẩu không đúng, hoặc tài khoản đã bị vô hiệu!');
@@ -117,165 +86,14 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     logout();
-    setCurrentUserState(null);
+    setCurrentUser(null);
     setUsernameInput('');
     setPasswordInput('');
     setActiveTab('dashboard');
   };
 
-  // ---- CRUD Applicants ----
-  const openAddModal = () => {
-    setEditingApplicant(null);
-    setFormData({ cccd: '', hoTen: '', ngaySinh: '', soDienThoai: '', email: '', chiBoDangBo: '' });
-    setShowApplicantModal(true);
-  };
-
-  const openEditModal = (applicant) => {
-    setEditingApplicant(applicant);
-    setFormData({
-      cccd: applicant.cccd,
-      hoTen: applicant.hoTen,
-      ngaySinh: applicant.ngaySinh,
-      soDienThoai: applicant.soDienThoai,
-      email: applicant.email,
-      chiBoDangBo: applicant.chiBoDangBo,
-    });
-    setShowApplicantModal(true);
-  };
-
-  const handleSaveApplicant = (e) => {
-    e.preventDefault();
-    try {
-      if (editingApplicant) {
-        updateApplicant(editingApplicant.id, formData);
-        setAlert({ type: 'success', message: 'Cập nhật thông tin thành công!' });
-      } else {
-        addApplicant(formData);
-        setAlert({ type: 'success', message: 'Thêm quần chúng mới thành công!' });
-      }
-      setShowApplicantModal(false);
-      loadData();
-    } catch (err) {
-      setAlert({ type: 'error', message: err.message });
-    }
-  };
-
-  const handleDelete = (id) => {
-    deleteApplicant(id);
-    setShowDeleteConfirm(null);
-    loadData();
-    setAlert({ type: 'success', message: 'Đã xóa hồ sơ thành công!' });
-  };
-
-  // ---- Process Management ----
-  const openProcessModal = (applicant) => {
-    setSelectedApplicant(applicant);
-    setShowProcessModal(true);
-  };
-
-  const handleUpdateStep = (soThuTu, trangThai) => {
-    try {
-      updateProcessStep(
-        selectedApplicant.id,
-        soThuTu,
-        trangThai,
-        '',
-        currentUserState ? currentUserState.hoTen : ''
-      );
-      const updated = getAllApplicants().find(a => a.id === selectedApplicant.id);
-      setSelectedApplicant(updated);
-      loadData();
-      setAlert({ type: 'success', message: `Cập nhật bước ${soThuTu} thành công!` });
-    } catch (err) {
-      setAlert({ type: 'error', message: err.message });
-    }
-  };
-
-  // ---- Export Excel ----
-  const handleExport = () => {
-    try {
-      exportApplicantsToXlsx(applicants);
-      setAlert({ type: 'success', message: 'Xuất file Excel thành công!' });
-    } catch (err) {
-      setAlert({ type: 'error', message: 'Lỗi xuất file: ' + err.message });
-    }
-  };
-
-  // ---- Import Excel ----
-  const handleFileSelect = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setImportFile(file);
-    setImportLoading(true);
-    try {
-      const { data, errors } = await parseXlsxFile(file);
-      setImportPreview(data);
-      setImportErrors(errors);
-    } catch (err) {
-      setImportErrors([err.message]);
-      setImportPreview([]);
-    }
-    setImportLoading(false);
-  };
-
-  const handleImportConfirm = () => {
-    let success = 0;
-    let failed = [];
-    importPreview.forEach((row) => {
-      try {
-        addApplicant(row);
-        success++;
-      } catch (err) {
-        failed.push(`${row.hoTen}: ${err.message}`);
-      }
-    });
-    loadData();
-    setShowImportModal(false);
-    setImportFile(null);
-    setImportPreview([]);
-    setImportErrors([]);
-    if (failed.length === 0) {
-      setAlert({ type: 'success', message: `Đã nhập thành công ${success} hồ sơ!` });
-    } else {
-      setAlert({ type: 'error', message: `Nhập ${success} thành công, ${failed.length} thất bại: ${failed.join('; ')}` });
-    }
-  };
-
-  const handleCloseImport = () => {
-    setShowImportModal(false);
-    setImportFile(null);
-    setImportPreview([]);
-    setImportErrors([]);
-  };
-
-  // ---- Sort newest first ----
-  const sortedApplicants = [...applicants].sort(
-    (a, b) => new Date(b.ngayTao) - new Date(a.ngayTao)
-  );
-
-  // ---- Filter applicants (Quần chúng tab) ----
-  const filteredApplicants = sortedApplicants.filter(a => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return a.hoTen.toLowerCase().includes(term) ||
-           a.cccd.includes(term) ||
-           a.chiBoDangBo.toLowerCase().includes(term);
-  });
-
-  // ---- Pagination helpers ----
-  const paginate = (list, page) => list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const totalPages = (list) => Math.max(1, Math.ceil(list.length / PAGE_SIZE));
-
-  // Dashboard
-  const dashTotalPages = totalPages(sortedApplicants);
-  const dashPageItems = paginate(sortedApplicants, dashPage);
-
-  // Applicants tab
-  const applicantTotalPages = totalPages(filteredApplicants);
-  const applicantPageItems = paginate(filteredApplicants, applicantPage);
-
-  // ---- LOGIN SCREEN ----
-  if (!currentUserState) {
+  // ====== LOGIN SCREEN ======
+  if (!currentUser) {
     const adminEmail = getAdminEmail();
     return (
       <>
@@ -298,9 +116,7 @@ export default function AdminPage() {
             <h2>Đăng nhập Quản trị</h2>
             <p>Nhập thông tin đăng nhập để truy cập trang quản trị</p>
 
-            {loginError && (
-              <div className="alert alert-error">⚠️ {loginError}</div>
-            )}
+            {loginError && <div className="alert alert-error">⚠️ {loginError}</div>}
 
             {showForgotPwd ? (
               <div className="forgot-pwd-panel">
@@ -324,37 +140,19 @@ export default function AdminPage() {
               <form onSubmit={handleLogin}>
                 <div className="form-group">
                   <label htmlFor="login-username">Tên đăng nhập</label>
-                  <input
-                    id="login-username"
-                    type="text"
-                    className="form-input"
-                    placeholder="Nhập tên đăng nhập"
-                    value={usernameInput}
-                    onChange={(e) => setUsernameInput(e.target.value)}
-                    required
-                  />
+                  <input id="login-username" type="text" className="form-input"
+                    placeholder="Nhập tên đăng nhập" value={usernameInput}
+                    onChange={e => setUsernameInput(e.target.value)} required />
                 </div>
                 <div className="form-group">
                   <label htmlFor="login-password">Mật khẩu</label>
-                  <input
-                    id="login-password"
-                    type="password"
-                    className="form-input"
-                    placeholder="Nhập mật khẩu"
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    required
-                  />
+                  <input id="login-password" type="password" className="form-input"
+                    placeholder="Nhập mật khẩu" value={passwordInput}
+                    onChange={e => setPasswordInput(e.target.value)} required />
                 </div>
-                <button type="submit" className="btn btn-primary btn-block mt-2">
-                  Đăng nhập
-                </button>
+                <button type="submit" className="btn btn-primary btn-block mt-2">Đăng nhập</button>
                 <div className="forgot-pwd-link">
-                  <button
-                    type="button"
-                    onClick={() => setShowForgotPwd(true)}
-                    className="link-btn"
-                  >
+                  <button type="button" onClick={() => setShowForgotPwd(true)} className="link-btn">
                     Quên mật khẩu?
                   </button>
                 </div>
@@ -366,7 +164,7 @@ export default function AdminPage() {
     );
   }
 
-  // ---- ADMIN DASHBOARD ----
+  // ====== ADMIN DASHBOARD ======
   return (
     <>
       <header className="header">
@@ -379,13 +177,13 @@ export default function AdminPage() {
             <Link href="/" className="header-nav-link">🔍 Tra cứu</Link>
             <Link href="/admin" className="header-nav-link active">🔐 Quản trị</Link>
             <div className="user-session-badge">
-              <div className={`user-avatar user-avatar-${currentUserState.role}`}>
-                {currentUserState.hoTen.charAt(0).toUpperCase()}
+              <div className={`user-avatar user-avatar-${currentUser.role}`}>
+                {currentUser.hoTen.charAt(0).toUpperCase()}
               </div>
               <div className="user-session-info">
-                <span className="user-session-name">{currentUserState.hoTen}</span>
-                <span className={`role-badge-sm role-${currentUserState.role}`}>
-                  {userIsAdmin ? '👑' : '✏️'} {ROLE_LABELS[currentUserState.role]}
+                <span className="user-session-name">{currentUser.hoTen}</span>
+                <span className={`role-badge-sm role-${currentUser.role}`}>
+                  {userIsAdmin ? '👑' : '✏️'} {ROLE_LABELS[currentUser.role]}
                 </span>
               </div>
             </div>
@@ -406,652 +204,56 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="tabs">
-          <button
-            className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-            id="tab-dashboard"
-          >
-            📊 Tổng quan
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'applicants' ? 'active' : ''}`}
-            onClick={() => setActiveTab('applicants')}
-            id="tab-applicants"
-          >
-            👥 Quần chúng
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'processes' ? 'active' : ''}`}
-            onClick={() => setActiveTab('processes')}
-            id="tab-processes"
-          >
-            📋 Quy trình
-          </button>
+          <button className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')} id="tab-dashboard">📊 Tổng quan</button>
+          <button className={`tab-btn ${activeTab === 'applicants' ? 'active' : ''}`} onClick={() => setActiveTab('applicants')} id="tab-applicants">👥 Quần chúng</button>
+          <button className={`tab-btn ${activeTab === 'processes' ? 'active' : ''}`} onClick={() => setActiveTab('processes')} id="tab-processes">📋 Quy trình</button>
           {userIsAdmin && (
             <>
-              <button
-                className={`tab-btn ${activeTab === 'danhmuc' ? 'active' : ''}`}
-                onClick={() => setActiveTab('danhmuc')}
-                id="tab-danhmuc"
-              >
-                🗂️ Danh mục
-              </button>
-              <button
-                className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-                onClick={() => setActiveTab('users')}
-                id="tab-users"
-              >
-                👤 Thành viên
-              </button>
-              <button
-                className={`tab-btn ${activeTab === 'email' ? 'active' : ''}`}
-                onClick={() => setActiveTab('email')}
-                id="tab-email"
-              >
-                📧 Email
-              </button>
+              <button className={`tab-btn ${activeTab === 'danhmuc' ? 'active' : ''}`} onClick={() => setActiveTab('danhmuc')} id="tab-danhmuc">🗂️ Danh mục</button>
+              <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')} id="tab-users">👤 Thành viên</button>
+              <button className={`tab-btn ${activeTab === 'email' ? 'active' : ''}`} onClick={() => setActiveTab('email')} id="tab-email">📧 Email</button>
             </>
           )}
         </div>
 
-        {/* ====== DASHBOARD TAB ====== */}
-        {activeTab === 'dashboard' && stats && (
-          <>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa' }}>📁</div>
-                <div className="stat-card-value" style={{ color: '#60a5fa' }}>{stats.tongSo}</div>
-                <div className="stat-card-label">Tổng hồ sơ</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6' }}>🔄</div>
-                <div className="stat-card-value" style={{ color: '#3b82f6' }}>{stats.dangXuLy}</div>
-                <div className="stat-card-label">Đang xử lý</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-card-icon" style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399' }}>✅</div>
-                <div className="stat-card-value" style={{ color: '#10b981' }}>{stats.daHoanThanh}</div>
-                <div className="stat-card-label">Hoàn thành</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-card-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24' }}>⏳</div>
-                <div className="stat-card-value" style={{ color: '#f59e0b' }}>{stats.choXuLy}</div>
-                <div className="stat-card-label">Chờ xử lý</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171' }}>❌</div>
-                <div className="stat-card-value" style={{ color: '#ef4444' }}>{stats.daHuy}</div>
-                <div className="stat-card-label">Đã hủy</div>
-              </div>
-            </div>
-
-            {/* Recent applicants — sorted newest first, paginated */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
-              <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 700, margin: 0 }}>
-                Hồ sơ gần đây
-              </h3>
-              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                Tổng {sortedApplicants.length} hồ sơ &nbsp;·&nbsp; Trang {dashPage}/{dashTotalPages}
-              </span>
-            </div>
-            <div className="data-table-wrapper">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Họ tên</th>
-                    <th>CCCD</th>
-                    <th>Chi bộ/Đảng bộ</th>
-                    <th>Tiến độ</th>
-                    <th>Ngày tạo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dashPageItems.map((a, i) => {
-                    const step = getCurrentStep(a);
-                    const isCancelled = step === -1;
-                    return (
-                      <tr key={a.id}>
-                        <td>{(dashPage - 1) * PAGE_SIZE + i + 1}</td>
-                        <td style={{ fontWeight: 600 }}>{a.hoTen}</td>
-                        <td>{a.cccd}</td>
-                        <td style={{ fontSize: 'var(--text-xs)' }}>{a.chiBoDangBo}</td>
-                        <td>
-                          {isCancelled ? (
-                            <span className="status-badge status-huy_ho_so">✕ Hủy</span>
-                          ) : (
-                            <span className="status-badge status-dang_xu_ly">
-                              Bước {step}/{a.quyTrinh.length}
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                          {new Date(a.ngayTao).toLocaleDateString('vi-VN')}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {dashTotalPages > 1 && (
-              <div className="pagination">
-                <button
-                  className="page-btn"
-                  onClick={() => setDashPage(p => Math.max(1, p - 1))}
-                  disabled={dashPage === 1}
-                >← Trước</button>
-                {Array.from({ length: dashTotalPages }, (_, i) => i + 1).map(p => (
-                  <button
-                    key={p}
-                    className={`page-btn ${dashPage === p ? 'active' : ''}`}
-                    onClick={() => setDashPage(p)}
-                  >{p}</button>
-                ))}
-                <button
-                  className="page-btn"
-                  onClick={() => setDashPage(p => Math.min(dashTotalPages, p + 1))}
-                  disabled={dashPage === dashTotalPages}
-                >Tiếp →</button>
-              </div>
-            )}
-          </>
+        {/* Tab content */}
+        {activeTab === 'dashboard' && (
+          <DashboardTab applicants={applicants} stats={stats} />
         )}
-
-        {/* ====== APPLICANTS TAB ====== */}
         {activeTab === 'applicants' && (
-          <>
-            <div className="toolbar">
-              <div className="toolbar-search">
-                <span className="toolbar-search-icon">🔍</span>
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm theo tên, CCCD, chi bộ..."
-                  value={searchTerm}
-                  onChange={(e) => { setSearchTerm(e.target.value); setApplicantPage(1); }}
-                />
-              </div>
-              <div className="toolbar-actions">
-                {userIsAdmin && (
-                  <>
-                    <button className="btn btn-secondary" onClick={() => exportImportTemplate()} title="Tải file mẫu nhập liệu" id="btn-download-template">
-                      📄 File mẫu
-                    </button>
-                    <button className="btn btn-secondary" onClick={() => setShowImportModal(true)} id="btn-import">
-                      📥 Nhập Excel
-                    </button>
-                    <button className="btn btn-secondary" onClick={handleExport} disabled={applicants.length === 0} id="btn-export">
-                      📤 Xuất Excel
-                    </button>
-                  </>
-                )}
-                <button className="btn btn-accent" onClick={openAddModal} id="btn-add-applicant">
-                  ＋ Thêm quần chúng
-                </button>
-              </div>
-            </div>
-
-            {filteredApplicants.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-icon">👥</div>
-                <h3>Chưa có dữ liệu</h3>
-                <p>Bấm &quot;Thêm quần chúng&quot; để bắt đầu nhập dữ liệu</p>
-              </div>
-            ) : (
-              <>
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
-                  Hiển thị {(applicantPage - 1) * PAGE_SIZE + 1}–{Math.min(applicantPage * PAGE_SIZE, filteredApplicants.length)} / {filteredApplicants.length} hồ sơ
-                </div>
-              <div className="data-table-wrapper">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Họ tên</th>
-                      <th>CCCD</th>
-                      <th>Ngày sinh</th>
-                      <th>SĐT</th>
-                      <th>Chi bộ/Đảng bộ</th>
-                      <th>Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {applicantPageItems.map((a, i) => (
-                      <tr key={a.id}>
-                        <td>{(applicantPage - 1) * PAGE_SIZE + i + 1}</td>
-                        <td style={{ fontWeight: 600 }}>{a.hoTen}</td>
-                        <td>{a.cccd}</td>
-                        <td style={{ fontSize: 'var(--text-xs)' }}>
-                          {new Date(a.ngaySinh).toLocaleDateString('vi-VN')}
-                        </td>
-                        <td style={{ fontSize: 'var(--text-xs)' }}>{a.soDienThoai}</td>
-                        <td style={{ fontSize: 'var(--text-xs)' }}>{a.chiBoDangBo}</td>
-                        <td>
-                          <div className="table-actions">
-                            {userIsAdmin && (
-                              <button className="btn btn-sm btn-secondary" onClick={() => openEditModal(a)} title="Sửa thông tin">
-                                ✏️
-                              </button>
-                            )}
-                            <button className="btn btn-sm btn-secondary" onClick={() => openProcessModal(a)} title="Quản lý quy trình">
-                              📋
-                            </button>
-                            {userIsAdmin && (
-                              <button className="btn btn-sm btn-danger" onClick={() => setShowDeleteConfirm(a.id)} title="Xóa">
-                                🗑️
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {applicantTotalPages > 1 && (
-                <div className="pagination">
-                  <button
-                    className="page-btn"
-                    onClick={() => setApplicantPage(p => Math.max(1, p - 1))}
-                    disabled={applicantPage === 1}
-                  >← Trước</button>
-                  {Array.from({ length: applicantTotalPages }, (_, i) => i + 1).map(p => (
-                    <button
-                      key={p}
-                      className={`page-btn ${applicantPage === p ? 'active' : ''}`}
-                      onClick={() => setApplicantPage(p)}
-                    >{p}</button>
-                  ))}
-                  <button
-                    className="page-btn"
-                    onClick={() => setApplicantPage(p => Math.min(applicantTotalPages, p + 1))}
-                    disabled={applicantPage === applicantTotalPages}
-                  >Tiếp →</button>
-                </div>
-              )}
-            </>
-            )}
-          </>
+          <ApplicantTab
+            applicants={applicants}
+            chiBoList={chiBoList}
+            userIsAdmin={userIsAdmin}
+            currentUser={currentUser}
+            onAlert={setAlert}
+            onReload={loadData}
+          />
         )}
-
-        {/* ====== PROCESSES TAB ====== */}
         {activeTab === 'processes' && (
-          <>
-            <div className="toolbar">
-              <div className="toolbar-search">
-                <span className="toolbar-search-icon">🔍</span>
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm theo tên, CCCD..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {filteredApplicants.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-icon">📋</div>
-                <h3>Chưa có dữ liệu</h3>
-                <p>Vui lòng thêm quần chúng trước</p>
-              </div>
-            ) : (
-              filteredApplicants.map((a) => {
-                const step = getCurrentStep(a);
-                const isCancelled = step === -1;
-                const progress = Math.round(
-                  (a.quyTrinh.filter(s => s.trangThai === 'da_nhan_phan_hoi').length / a.quyTrinh.length) * 100
-                );
-
-                return (
-                  <div key={a.id} className="applicant-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '8px' }}>
-                      <div>
-                        <div className="applicant-name">{a.hoTen}</div>
-                        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                          CCCD: {a.cccd} &nbsp;|&nbsp; {a.chiBoDangBo}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {isCancelled ? (
-                          <span className="status-badge status-huy_ho_so">✕ Hủy hồ sơ</span>
-                        ) : (
-                          <span className="status-badge status-dang_xu_ly">{progress}% — Bước {step}/{a.quyTrinh.length}</span>
-                        )}
-                        <button className="btn btn-sm btn-accent" onClick={() => openProcessModal(a)}>
-                          Cập nhật
-                        </button>
-                      </div>
-                    </div>
-                    <ProcessTimeline quyTrinh={a.quyTrinh} compact />
-                  </div>
-                );
-              })
-            )}
-          </>
+          <ProcessesTab
+            applicants={applicants}
+            userIsAdmin={userIsAdmin}
+            currentUser={currentUser}
+            onAlert={setAlert}
+            onReload={loadData}
+          />
         )}
-
-        {/* ====== DANH MUC TAB (Admin only) ====== */}
         {activeTab === 'danhmuc' && userIsAdmin && (
-          <DanhMucTab
-            onAlert={setAlert}
-            onChiBoChanged={loadData}
-          />
+          <DanhMucTab onAlert={setAlert} onReload={loadData} />
         )}
-
-        {/* ====== USERS TAB (Admin only) ====== */}
         {activeTab === 'users' && userIsAdmin && (
-          <UserManagementTab
-            onAlert={setAlert}
-            currentUser={currentUserState}
-          />
+          <UserManagementTab onAlert={setAlert} currentUser={currentUser} />
         )}
-
-        {/* ====== EMAIL TAB (Admin only) ====== */}
         {activeTab === 'email' && userIsAdmin && (
           <EmailTemplateTab onAlert={setAlert} />
         )}
+
+        {/* Footer */}
+        <footer style={{ textAlign: 'center', marginTop: '3rem', padding: '1.5rem 0', borderTop: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
+          © 2025 Hệ Thống Quản Lý Quy Trình Kết Nạp Đảng — Trang Quản Trị
+        </footer>
       </div>
-
-      {/* ====== MODALS ====== */}
-
-      {/* Add/Edit Applicant Modal */}
-      {showApplicantModal && (
-        <div className="modal-overlay" onClick={() => setShowApplicantModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{editingApplicant ? '✏️ Sửa thông tin' : '➕ Thêm quần chúng mới'}</h3>
-              <button className="modal-close" onClick={() => setShowApplicantModal(false)}>✕</button>
-            </div>
-            <form onSubmit={handleSaveApplicant}>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label htmlFor="form-cccd">Số CCCD *</label>
-                  <input
-                    id="form-cccd"
-                    type="text"
-                    className="form-input"
-                    placeholder="Nhập số CCCD (12 số)"
-                    value={formData.cccd}
-                    onChange={(e) => setFormData({ ...formData, cccd: e.target.value })}
-                    maxLength={12}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="form-hoten">Họ tên *</label>
-                  <input
-                    id="form-hoten"
-                    type="text"
-                    className="form-input"
-                    placeholder="Nhập họ và tên"
-                    value={formData.hoTen}
-                    onChange={(e) => setFormData({ ...formData, hoTen: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="form-ngaysinh">Ngày sinh *</label>
-                    <input
-                      id="form-ngaysinh"
-                      type="date"
-                      className="form-input"
-                      value={formData.ngaySinh}
-                      onChange={(e) => setFormData({ ...formData, ngaySinh: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="form-sdt">Số điện thoại</label>
-                    <input
-                      id="form-sdt"
-                      type="tel"
-                      className="form-input"
-                      placeholder="0901234567"
-                      value={formData.soDienThoai}
-                      onChange={(e) => setFormData({ ...formData, soDienThoai: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="form-email">Email</label>
-                  <input
-                    id="form-email"
-                    type="email"
-                    className="form-input"
-                    placeholder="email@example.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="form-chibo">Chi bộ / Đảng bộ cơ sở *</label>
-                  <select
-                    id="form-chibo"
-                    className="form-select"
-                    value={formData.chiBoDangBo}
-                    onChange={(e) => setFormData({ ...formData, chiBoDangBo: e.target.value })}
-                    required
-                  >
-                    <option value="">-- Chọn chi bộ / đảng bộ --</option>
-                    {chiBoList.map((cb) => (
-                      <option key={cb} value={cb}>{cb}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowApplicantModal(false)}>
-                  Hủy
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingApplicant ? 'Cập nhật' : 'Thêm mới'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Process Management Modal */}
-      {showProcessModal && selectedApplicant && (
-        <div className="modal-overlay" onClick={() => setShowProcessModal(false)}>
-          <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>📋 Quản lý quy trình — {selectedApplicant.hoTen}</h3>
-              <button className="modal-close" onClick={() => setShowProcessModal(false)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div style={{ marginBottom: '1rem', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                CCCD: {selectedApplicant.cccd} &nbsp;|&nbsp; {selectedApplicant.chiBoDangBo}
-              </div>
-
-              {selectedApplicant.quyTrinh.map((step) => (
-                <div key={step.soThuTu} className="process-step-row">
-                  <div className="process-step-number">{step.soThuTu}</div>
-                  <div className="process-step-info">
-                    <div className="process-step-name">{step.tenQuyTrinh}</div>
-                    {step.nguoiCapNhat && (
-                      <div className="process-step-audit">
-                        👤 {step.nguoiCapNhat}
-                        {step.gioCapNhat && ` · ${step.gioCapNhat}`}
-                      </div>
-                    )}
-                  </div>
-                  <select
-                    className="process-step-select"
-                    value={step.trangThai}
-                    onChange={(e) => handleUpdateStep(step.soThuTu, e.target.value)}
-                  >
-                    <option value={STATUSES.CHUA_BAT_DAU}>{STATUS_LABELS.chua_bat_dau}</option>
-                    <option value={STATUSES.DA_GUI}>{STATUS_LABELS.da_gui}</option>
-                    <option value={STATUSES.DANG_XU_LY}>{STATUS_LABELS.dang_xu_ly}</option>
-                    <option value={STATUSES.DA_NHAN_PHAN_HOI}>{STATUS_LABELS.da_nhan_phan_hoi}</option>
-                    <option value={STATUSES.HUY_HO_SO}>{STATUS_LABELS.huy_ho_so}</option>
-                  </select>
-                  <span className={`status-badge status-${step.trangThai}`}>
-                    {STATUS_LABELS[step.trangThai]}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowProcessModal(false)}>
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(null)}>
-          <div className="modal" style={{ maxWidth: '400px' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>⚠️ Xác nhận xóa</h3>
-              <button className="modal-close" onClick={() => setShowDeleteConfirm(null)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <p>Bạn có chắc chắn muốn xóa hồ sơ này? Hành động này không thể hoàn tác.</p>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowDeleteConfirm(null)}>
-                Hủy
-              </button>
-              <button className="btn btn-danger" onClick={() => handleDelete(showDeleteConfirm)}>
-                Xóa
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ====== IMPORT EXCEL MODAL ====== */}
-      {showImportModal && (
-        <div className="modal-overlay" onClick={handleCloseImport}>
-          <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>📥 Nhập dữ liệu từ Excel</h3>
-              <button className="modal-close" onClick={handleCloseImport}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div className="import-step">
-                <div className="import-step-title">
-                  <span className="import-step-num">1</span> Chọn file Excel (.xlsx)
-                </div>
-                <div className="import-file-zone">
-                  <input
-                    type="file"
-                    accept=".xlsx,.xls"
-                    id="import-file-input"
-                    style={{ display: 'none' }}
-                    onChange={handleFileSelect}
-                  />
-                  <label htmlFor="import-file-input" className="import-file-label">
-                    {importFile ? (
-                      <>
-                        <span style={{ fontSize: '1.5rem' }}>📄</span>
-                        <span style={{ fontWeight: 600 }}>{importFile.name}</span>
-                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                          Nhấn để chọn file khác
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span style={{ fontSize: '2rem' }}>📂</span>
-                        <span style={{ fontWeight: 600 }}>Nhấn để chọn file Excel</span>
-                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                          Hỗ trợ định dạng .xlsx, .xls
-                        </span>
-                      </>
-                    )}
-                  </label>
-                </div>
-                <div style={{ marginTop: '0.5rem', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                  💡 Chưa có file mẫu?{' '}
-                  <button
-                    type="button"
-                    onClick={() => exportImportTemplate()}
-                    style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', textDecoration: 'underline', fontSize: 'inherit' }}
-                  >
-                    Tải file mẫu nhập liệu
-                  </button>
-                </div>
-              </div>
-
-              {importErrors.length > 0 && (
-                <div className="import-errors">
-                  <div className="import-errors-title">⚠️ Phát hiện {importErrors.length} lỗi:</div>
-                  <ul>
-                    {importErrors.map((e, i) => (
-                      <li key={i}>{e}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {importPreview.length > 0 && (
-                <div className="import-step">
-                  <div className="import-step-title">
-                    <span className="import-step-num">2</span>
-                    Xem trước dữ liệu — {importPreview.length} hồ sơ hợp lệ
-                  </div>
-                  <div className="data-table-wrapper" style={{ maxHeight: '280px', overflowY: 'auto' }}>
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>CCCD</th>
-                          <th>Họ tên</th>
-                          <th>Ngày sinh</th>
-                          <th>SĐT</th>
-                          <th>Chi bộ / Đảng bộ</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {importPreview.map((row, i) => (
-                          <tr key={i}>
-                            <td>{i + 1}</td>
-                            <td>{row.cccd}</td>
-                            <td style={{ fontWeight: 600 }}>{row.hoTen}</td>
-                            <td style={{ fontSize: 'var(--text-xs)' }}>{row.ngaySinh}</td>
-                            <td style={{ fontSize: 'var(--text-xs)' }}>{row.soDienThoai}</td>
-                            <td style={{ fontSize: 'var(--text-xs)' }}>{row.chiBoDangBo}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {importLoading && (
-                <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--color-text-muted)' }}>
-                  ⏳ Đang đọc file...
-                </div>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={handleCloseImport}>Hủy</button>
-              <button
-                className="btn btn-primary"
-                onClick={handleImportConfirm}
-                disabled={importPreview.length === 0 || importLoading}
-                id="btn-confirm-import"
-              >
-                ✅ Nhập {importPreview.length > 0 ? `${importPreview.length} hồ sơ` : ''}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <footer className="footer">
-        <p>© 2025 Hệ Thống Quản Lý Quy Trình Kết Nạp Đảng — Trang Quản Trị</p>
-      </footer>
     </>
   );
 }

@@ -1,0 +1,466 @@
+'use client';
+
+import { useState, useCallback } from 'react';
+import {
+  addApplicant,
+  updateApplicant,
+  deleteApplicant,
+  updateProcessStep,
+  getAllApplicants,
+  getCurrentStep,
+} from '../lib/store';
+import { STATUS_LABELS, STATUSES } from '../lib/constants';
+import { exportApplicantsToXlsx, exportImportTemplate, parseXlsxFile } from '../lib/excelUtils';
+import ProcessTimeline from './ProcessTimeline';
+
+const PAGE_SIZE = 10;
+
+function Paginator({ page, total, onPage, totalItems }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+        Hiển thị {Math.min((page - 1) * PAGE_SIZE + 1, totalItems)}–{Math.min(page * PAGE_SIZE, totalItems)} / {totalItems} hồ sơ
+      </span>
+      {total > 1 && (
+        <div className="pagination" style={{ padding: '0' }}>
+          <button className="page-btn" onClick={() => onPage(p => Math.max(1, p - 1))} disabled={page === 1}>← Trước</button>
+          {Array.from({ length: total }, (_, i) => i + 1).map(p => (
+            <button key={p} className={`page-btn ${page === p ? 'active' : ''}`} onClick={() => onPage(p)}>{p}</button>
+          ))}
+          <button className="page-btn" onClick={() => onPage(p => Math.min(total, p + 1))} disabled={page === total}>Tiếp →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================
+// Applicant Tab
+// =============================================
+export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, currentUser, onAlert, onReload }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+
+  // Modals
+  const [showApplicantModal, setShowApplicantModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [editingApplicant, setEditingApplicant] = useState(null);
+  const [showProcessModal, setShowProcessModal] = useState(false);
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
+
+  // Import
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importPreview, setImportPreview] = useState([]);
+  const [importErrors, setImportErrors] = useState([]);
+  const [importLoading, setImportLoading] = useState(false);
+
+  // Form
+  const [formData, setFormData] = useState({
+    cccd: '', hoTen: '', ngaySinh: '', soDienThoai: '', email: '', chiBoDangBo: '',
+  });
+
+  // Sort newest first + filter
+  const sorted = [...applicants].sort((a, b) => new Date(b.ngayTao) - new Date(a.ngayTao));
+  const filtered = sorted.filter(a => {
+    if (!searchTerm) return true;
+    const t = searchTerm.toLowerCase();
+    return a.hoTen.toLowerCase().includes(t) || a.cccd.includes(t) || a.chiBoDangBo.toLowerCase().includes(t);
+  });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // ---- CRUD ----
+  const openAdd = () => {
+    setEditingApplicant(null);
+    setFormData({ cccd: '', hoTen: '', ngaySinh: '', soDienThoai: '', email: '', chiBoDangBo: '' });
+    setShowApplicantModal(true);
+  };
+
+  const openEdit = (a) => {
+    setEditingApplicant(a);
+    setFormData({ cccd: a.cccd, hoTen: a.hoTen, ngaySinh: a.ngaySinh, soDienThoai: a.soDienThoai, email: a.email, chiBoDangBo: a.chiBoDangBo });
+    setShowApplicantModal(true);
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    try {
+      if (editingApplicant) {
+        updateApplicant(editingApplicant.id, formData);
+        onAlert({ type: 'success', message: 'Cập nhật thông tin thành công!' });
+      } else {
+        addApplicant(formData);
+        onAlert({ type: 'success', message: 'Thêm quần chúng mới thành công!' });
+      }
+      setShowApplicantModal(false);
+      onReload();
+    } catch (err) {
+      onAlert({ type: 'error', message: err.message });
+    }
+  };
+
+  const handleDelete = (id) => {
+    deleteApplicant(id);
+    setShowDeleteConfirm(null);
+    onReload();
+    onAlert({ type: 'success', message: 'Đã xóa hồ sơ thành công!' });
+  };
+
+  // ---- Process update ----
+  const openProcess = (a) => { setSelectedApplicant(a); setShowProcessModal(true); };
+
+  const handleUpdateStep = (soThuTu, trangThai) => {
+    try {
+      updateProcessStep(selectedApplicant.id, soThuTu, trangThai, '', currentUser?.hoTen || '');
+      const updated = getAllApplicants().find(a => a.id === selectedApplicant.id);
+      setSelectedApplicant(updated);
+      onReload();
+      onAlert({ type: 'success', message: `Cập nhật bước ${soThuTu} thành công!` });
+    } catch (err) {
+      onAlert({ type: 'error', message: err.message });
+    }
+  };
+
+  // ---- Export ----
+  const handleExport = () => {
+    try {
+      exportApplicantsToXlsx(applicants);
+      onAlert({ type: 'success', message: 'Xuất file Excel thành công!' });
+    } catch (err) {
+      onAlert({ type: 'error', message: 'Lỗi xuất file: ' + err.message });
+    }
+  };
+
+  // ---- Import ----
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImportFile(file);
+    setImportLoading(true);
+    try {
+      const { data, errors } = await parseXlsxFile(file);
+      setImportPreview(data);
+      setImportErrors(errors);
+    } catch (err) {
+      setImportErrors([err.message]);
+      setImportPreview([]);
+    }
+    setImportLoading(false);
+  };
+
+  const handleImportConfirm = () => {
+    let success = 0;
+    const failed = [];
+    importPreview.forEach(row => {
+      try { addApplicant(row); success++; }
+      catch (err) { failed.push(`${row.hoTen}: ${err.message}`); }
+    });
+    onReload();
+    setShowImportModal(false);
+    setImportFile(null); setImportPreview([]); setImportErrors([]);
+    if (!failed.length) {
+      onAlert({ type: 'success', message: `Đã nhập thành công ${success} hồ sơ!` });
+    } else {
+      onAlert({ type: 'error', message: `Nhập ${success} thành công, ${failed.length} thất bại: ${failed.join('; ')}` });
+    }
+  };
+
+  const closeImport = () => {
+    setShowImportModal(false); setImportFile(null); setImportPreview([]); setImportErrors([]);
+  };
+
+  // ---- Get current step name ----
+  const getStepName = (a) => {
+    const step = getCurrentStep(a);
+    if (step === -1) return null; // cancelled
+    // Find the next pending step (what they're working on)
+    const nextStep = a.quyTrinh.find(s =>
+      s.trangThai === STATUSES.DANG_XU_LY || s.trangThai === STATUSES.DA_GUI || s.trangThai === STATUSES.CHUA_BAT_DAU
+    );
+    if (nextStep) return { num: nextStep.soThuTu, name: nextStep.tenQuyTrinh };
+    return { num: a.quyTrinh.length, name: a.quyTrinh[a.quyTrinh.length - 1]?.tenQuyTrinh };
+  };
+
+  return (
+    <>
+      {/* Toolbar */}
+      <div className="toolbar">
+        <div className="toolbar-search">
+          <span className="toolbar-search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên, CCCD, chi bộ..."
+            value={searchTerm}
+            onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
+          />
+        </div>
+        <div className="toolbar-actions">
+          {userIsAdmin && (
+            <>
+              <button className="btn btn-secondary" onClick={() => exportImportTemplate()} id="btn-download-template">📄 File mẫu</button>
+              <button className="btn btn-secondary" onClick={() => setShowImportModal(true)} id="btn-import">📥 Nhập Excel</button>
+              <button className="btn btn-secondary" onClick={handleExport} disabled={applicants.length === 0} id="btn-export">📤 Xuất Excel</button>
+            </>
+          )}
+          <button className="btn btn-accent" onClick={openAdd} id="btn-add-applicant">＋ Thêm quần chúng</button>
+        </div>
+      </div>
+
+      {/* Table */}
+      {filtered.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-state-icon">👥</div>
+          <h3>{searchTerm ? 'Không tìm thấy kết quả' : 'Chưa có dữ liệu'}</h3>
+          <p>{searchTerm ? 'Thử tìm với từ khóa khác' : 'Bấm "Thêm quần chúng" để bắt đầu'}</p>
+        </div>
+      ) : (
+        <>
+          <div className="data-table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Họ tên</th>
+                  <th>CCCD</th>
+                  <th>Ngày sinh</th>
+                  <th>SĐT</th>
+                  <th>Chi bộ/Đảng bộ</th>
+                  <th>Tiến độ</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageItems.map((a, i) => {
+                  const step = getCurrentStep(a);
+                  const isCancelled = step === -1;
+                  const stepInfo = getStepName(a);
+
+                  return (
+                    <tr key={a.id}>
+                      <td>{(page - 1) * PAGE_SIZE + i + 1}</td>
+                      <td style={{ fontWeight: 600 }}>{a.hoTen}</td>
+                      <td style={{ fontSize: 'var(--text-xs)' }}>{a.cccd}</td>
+                      <td style={{ fontSize: 'var(--text-xs)' }}>{new Date(a.ngaySinh).toLocaleDateString('vi-VN')}</td>
+                      <td style={{ fontSize: 'var(--text-xs)' }}>{a.soDienThoai}</td>
+                      <td style={{ fontSize: 'var(--text-xs)' }}>{a.chiBoDangBo}</td>
+                      <td>
+                        {isCancelled ? (
+                          <span className="status-badge status-huy_ho_so">✕ Hủy</span>
+                        ) : (
+                          <div className="step-progress-cell">
+                            <span className="status-badge status-dang_xu_ly">
+                              Bước {stepInfo?.num || step}/{a.quyTrinh.length}
+                            </span>
+                            {stepInfo && (
+                              <span className="step-name-label" title={stepInfo.name}>
+                                {stepInfo.name}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          {userIsAdmin && (
+                            <button className="btn btn-sm btn-secondary" onClick={() => openEdit(a)} title="Sửa">✏️</button>
+                          )}
+                          <button className="btn btn-sm btn-secondary" onClick={() => openProcess(a)} title="Quy trình">📋</button>
+                          {userIsAdmin && (
+                            <button className="btn btn-sm btn-danger" onClick={() => setShowDeleteConfirm(a.id)} title="Xóa">🗑️</button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <Paginator page={page} total={totalPages} onPage={setPage} totalItems={filtered.length} />
+        </>
+      )}
+
+      {/* ====== ADD/EDIT MODAL ====== */}
+      {showApplicantModal && (
+        <div className="modal-overlay" onClick={() => setShowApplicantModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{editingApplicant ? '✏️ Sửa thông tin' : '➕ Thêm quần chúng mới'}</h3>
+              <button className="modal-close" onClick={() => setShowApplicantModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleSave}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Số CCCD *</label>
+                  <input type="text" className="form-input" required maxLength={12}
+                    value={formData.cccd} onChange={e => setFormData({ ...formData, cccd: e.target.value })} placeholder="12 số" />
+                </div>
+                <div className="form-group">
+                  <label>Họ tên *</label>
+                  <input type="text" className="form-input" required
+                    value={formData.hoTen} onChange={e => setFormData({ ...formData, hoTen: e.target.value })} placeholder="Nguyễn Văn A" />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Ngày sinh *</label>
+                    <input type="date" className="form-input" required
+                      value={formData.ngaySinh} onChange={e => setFormData({ ...formData, ngaySinh: e.target.value })} />
+                  </div>
+                  <div className="form-group">
+                    <label>Số điện thoại</label>
+                    <input type="tel" className="form-input"
+                      value={formData.soDienThoai} onChange={e => setFormData({ ...formData, soDienThoai: e.target.value })} placeholder="0901234567" />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Email</label>
+                  <input type="email" className="form-input"
+                    value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" />
+                </div>
+                <div className="form-group">
+                  <label>Chi bộ / Đảng bộ *</label>
+                  <select className="form-select" required
+                    value={formData.chiBoDangBo} onChange={e => setFormData({ ...formData, chiBoDangBo: e.target.value })}>
+                    <option value="">-- Chọn chi bộ / đảng bộ --</option>
+                    {chiBoList.map(cb => <option key={cb} value={cb}>{cb}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowApplicantModal(false)}>Hủy</button>
+                <button type="submit" className="btn btn-primary">{editingApplicant ? 'Cập nhật' : 'Thêm mới'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ====== PROCESS MODAL ====== */}
+      {showProcessModal && selectedApplicant && (
+        <div className="modal-overlay" onClick={() => setShowProcessModal(false)}>
+          <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3 style={{ margin: 0 }}>📋 Quy trình — {selectedApplicant.hoTen}</h3>
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                  CCCD: {selectedApplicant.cccd} &nbsp;|&nbsp; {selectedApplicant.chiBoDangBo}
+                </div>
+              </div>
+              <button className="modal-close" onClick={() => setShowProcessModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              {selectedApplicant.quyTrinh.map(step => (
+                <div key={step.soThuTu} className="process-step-row">
+                  <div className="process-step-number">{step.soThuTu}</div>
+                  <div className="process-step-info">
+                    <div className="process-step-name">{step.tenQuyTrinh}</div>
+                    {step.nguoiCapNhat && (
+                      <div className="process-step-audit">
+                        👤 {step.nguoiCapNhat}{step.gioCapNhat && ` · ${step.gioCapNhat}`}
+                      </div>
+                    )}
+                  </div>
+                  <select
+                    className="process-step-select"
+                    value={step.trangThai}
+                    onChange={e => handleUpdateStep(step.soThuTu, e.target.value)}
+                  >
+                    {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                  <span className={`status-badge status-${step.trangThai}`}>{STATUS_LABELS[step.trangThai]}</span>
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowProcessModal(false)}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====== DELETE CONFIRM ====== */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(null)}>
+          <div className="modal" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>⚠️ Xác nhận xóa</h3>
+              <button className="modal-close" onClick={() => setShowDeleteConfirm(null)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p>Bạn có chắc chắn muốn xóa hồ sơ này? Hành động này không thể hoàn tác.</p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowDeleteConfirm(null)}>Hủy</button>
+              <button className="btn btn-danger" onClick={() => handleDelete(showDeleteConfirm)}>Xóa</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====== IMPORT MODAL ====== */}
+      {showImportModal && (
+        <div className="modal-overlay" onClick={closeImport}>
+          <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>📥 Nhập dữ liệu từ Excel</h3>
+              <button className="modal-close" onClick={closeImport}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="import-step">
+                <div className="import-step-title">
+                  <span className="import-step-num">1</span> Chọn file Excel (.xlsx)
+                </div>
+                <div className="import-file-zone">
+                  <input type="file" accept=".xlsx,.xls" id="import-file-input" style={{ display: 'none' }} onChange={handleFileSelect} />
+                  <label htmlFor="import-file-input" className="import-file-label">
+                    {importFile ? (
+                      <><span style={{ fontSize: '1.5rem' }}>📄</span><span style={{ fontWeight: 600 }}>{importFile.name}</span></>
+                    ) : (
+                      <><span style={{ fontSize: '2rem' }}>📂</span><span style={{ fontWeight: 600 }}>Nhấn để chọn file Excel</span></>
+                    )}
+                  </label>
+                </div>
+                <div style={{ marginTop: '0.5rem', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                  💡 <button type="button" onClick={() => exportImportTemplate()} className="link-btn">Tải file mẫu nhập liệu</button>
+                </div>
+              </div>
+
+              {importErrors.length > 0 && (
+                <div className="import-errors">
+                  <div className="import-errors-title">⚠️ {importErrors.length} lỗi:</div>
+                  <ul>{importErrors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+                </div>
+              )}
+
+              {importPreview.length > 0 && (
+                <div className="import-step">
+                  <div className="import-step-title">
+                    <span className="import-step-num">2</span> Xem trước — {importPreview.length} hồ sơ hợp lệ
+                  </div>
+                  <div className="data-table-wrapper" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                    <table className="data-table">
+                      <thead><tr><th>#</th><th>CCCD</th><th>Họ tên</th><th>Chi bộ/Đảng bộ</th></tr></thead>
+                      <tbody>
+                        {importPreview.map((row, i) => (
+                          <tr key={i}><td>{i+1}</td><td>{row.cccd}</td><td style={{ fontWeight: 600 }}>{row.hoTen}</td><td style={{ fontSize: 'var(--text-xs)' }}>{row.chiBoDangBo}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+              {importLoading && <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--color-text-muted)' }}>⏳ Đang đọc file...</div>}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={closeImport}>Hủy</button>
+              <button className="btn btn-primary" onClick={handleImportConfirm} disabled={importPreview.length === 0 || importLoading}>
+                ✅ Nhập {importPreview.length > 0 ? `${importPreview.length} hồ sơ` : ''}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
