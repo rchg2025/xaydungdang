@@ -43,10 +43,62 @@ export async function POST(request) {
       to: to,
       subject: subject,
       text: message,
-      html: message
-        .split('\n')
-        .map((line) => (line.trim() === '' ? '<br/>' : `<p style="margin:4px 0;line-height:1.6">${line}</p>`))
-        .join(''),
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f6f9; padding: 30px 10px;">
+            <tr>
+              <td align="center">
+                <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                  <!-- Header -->
+                  <tr>
+                    <td style="background-color: #b71c1c; text-align: center; padding: 25px 20px; border-bottom: 4px solid #ffca28;">
+                      <h2 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                        XÂY DỰNG ĐẢNG
+                      </h2>
+                    </td>
+                  </tr>
+                  
+                  <!-- Body -->
+                  <tr>
+                    <td style="padding: 30px 40px; color: #333333; font-size: 15px; line-height: 1.6;">
+                      ${message.split('\n').map(line => {
+                        const trimmed = line.trim();
+                        if (trimmed === '') return '<div style="height: 16px;"></div>';
+                        if (trimmed.startsWith('- ')) {
+                          const parts = trimmed.substring(2).split(':');
+                          if (parts.length > 1) {
+                            const lbl = parts[0];
+                            const val = parts.slice(1).join(':').trim();
+                            // Highlight list items with a prominent left border
+                            return `<div style="margin: 8px 0; padding: 10px 15px; background-color: #fdfaf9; border-left: 4px solid #b71c1c; border-radius: 0 4px 4px 0;"><strong style="color: #b71c1c;">${lbl}:</strong> <span style="color: #333;">${val}</span></div>`;
+                          }
+                          return `<div style="margin: 8px 0; padding-left: 10px; border-left: 3px solid #b71c1c;">${trimmed.substring(2)}</div>`;
+                        }
+                        return `<p style="margin: 0;">${trimmed}</p>`;
+                      }).join('')}
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color: #f8f9fa; text-align: center; padding: 20px; border-top: 1px solid #eeeeee; font-size: 13px; color: #777777;">
+                      <p style="margin: 0 0 5px 0;">Email này được gửi tự động từ <strong>Hệ thống tiếp nhận và xử lý hồ sơ xin kết nạp Đảng</strong>.</p>
+                      <p style="margin: 0;">Vui lòng không phản hồi lại email này.</p>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin-top: 20px; text-align: center; font-size: 12px; color: #aaaaaa;">&copy; ${new Date().getFullYear()} Hệ thống Xây dựng Đảng</p>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
     };
 
     await transporter.sendMail(mailOptions);
