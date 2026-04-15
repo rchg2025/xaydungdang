@@ -58,7 +58,7 @@ export async function POST(request) {
                   <tr>
                     <td style="background-color: #b71c1c; text-align: center; padding: 25px 20px; border-bottom: 4px solid #ffca28;">
                       <h2 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                        ĐẢNG BỘ PHƯỜNG CHÁNH HƯNG, TP.HỒ CHÍ MINH
+                        ĐẢNG BỘ PHƯỜNG CHÁNH HƯNG, TP.HCM
                       </h2>
                     </td>
                   </tr>
@@ -67,20 +67,20 @@ export async function POST(request) {
                   <tr>
                     <td style="padding: 30px 40px; color: #333333; font-size: 15px; line-height: 1.6;">
                       ${message.split('\n').map(line => {
-                        const trimmed = line.trim();
-                        if (trimmed === '') return '<div style="height: 16px;"></div>';
-                        if (trimmed.startsWith('- ')) {
-                          const parts = trimmed.substring(2).split(':');
-                          if (parts.length > 1) {
-                            const lbl = parts[0];
-                            const val = parts.slice(1).join(':').trim();
-                            // Highlight list items with a prominent left border
-                            return `<div style="margin: 8px 0; padding: 10px 15px; background-color: #fdfaf9; border-left: 4px solid #b71c1c; border-radius: 0 4px 4px 0;"><strong style="color: #b71c1c;">${lbl}:</strong> <span style="color: #333;">${val}</span></div>`;
-                          }
-                          return `<div style="margin: 8px 0; padding-left: 10px; border-left: 3px solid #b71c1c;">${trimmed.substring(2)}</div>`;
-                        }
-                        return `<p style="margin: 0;">${trimmed}</p>`;
-                      }).join('')}
+        const trimmed = line.trim();
+        if (trimmed === '') return '<div style="height: 16px;"></div>';
+        if (trimmed.startsWith('- ')) {
+          const parts = trimmed.substring(2).split(':');
+          if (parts.length > 1) {
+            const lbl = parts[0];
+            const val = parts.slice(1).join(':').trim();
+            // Highlight list items with a prominent left border
+            return `<div style="margin: 8px 0; padding: 10px 15px; background-color: #fdfaf9; border-left: 4px solid #b71c1c; border-radius: 0 4px 4px 0;"><strong style="color: #b71c1c;">${lbl}:</strong> <span style="color: #333;">${val}</span></div>`;
+          }
+          return `<div style="margin: 8px 0; padding-left: 10px; border-left: 3px solid #b71c1c;">${trimmed.substring(2)}</div>`;
+        }
+        return `<p style="margin: 0;">${trimmed}</p>`;
+      }).join('')}
                     </td>
                   </tr>
                   
