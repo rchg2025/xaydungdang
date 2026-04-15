@@ -1,5 +1,5 @@
 /* =============================================
-   HỆ THỐNG QUẢN LÝ QUY TRÌNH KẾT NẠP ĐẢNG
+   Há»† THá»NG QUáº¢N LÃ QUY TRÃŒNH Káº¾T Náº P Äáº¢NG
    Design System - globals.css
    ============================================= */
 
@@ -123,7 +123,7 @@ input, select, textarea, button {
 }
 
 .header-inner {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -284,7 +284,7 @@ input, select, textarea, button {
 
 /* ---- Search Section ---- */
 .search-section {
-  max-width: 700px;
+  max-width: 100%;
   margin: 2.5rem auto 3rem;
   padding: 0 1.5rem;
   position: relative;
@@ -381,7 +381,7 @@ input, select, textarea, button {
 
 /* ---- Results Section ---- */
 .results-section {
-  max-width: 1000px;
+  max-width: 100%;
   margin: 0 auto 4rem;
   padding: 0 1.5rem;
 }
@@ -725,7 +725,7 @@ input, select, textarea, button {
 
 /* ---- Admin Layout ---- */
 .admin-container {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 2rem 1.5rem;
 }
@@ -1392,7 +1392,7 @@ input, select, textarea, button {
 }
 
 /* =============================================
-   DANH MỤC TAB - Catalog Management
+   DANH Má»¤C TAB - Catalog Management
    ============================================= */
 
 /* ---- Container ---- */
@@ -1712,5 +1712,113 @@ input, select, textarea, button {
   }
   .danhmuc-inline-edit {
     flex-wrap: wrap;
+  }
+}
+
+/* =============================================
+   IMPORT / EXPORT - Excel functionality
+   ============================================= */
+
+/* ---- Toolbar Actions Group ---- */
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---- Import Steps ---- */
+.import-step {
+  margin-bottom: 1.5rem;
+}
+
+.import-step-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.import-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* ---- File Drop Zone ---- */
+.import-file-zone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+}
+
+.import-file-zone:hover {
+  border-color: var(--color-primary);
+  background: rgba(196, 30, 58, 0.04);
+}
+
+.import-file-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 2rem 1rem;
+  cursor: pointer;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.import-file-label:hover {
+  color: var(--color-text-primary);
+}
+
+/* ---- Import Errors ---- */
+.import-errors {
+  background: var(--color-danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.import-errors-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-danger);
+  margin-bottom: 0.5rem;
+}
+
+.import-errors ul {
+  padding-left: 1.25rem;
+  margin: 0;
+}
+
+.import-errors li {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  margin-bottom: 3px;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .toolbar-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .toolbar-actions .btn {
+    font-size: var(--text-xs);
+    padding: 7px 12px;
   }
 }

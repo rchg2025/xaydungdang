@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -20,6 +20,7 @@ import {
 } from '../lib/constants';
 import ProcessTimeline from '../components/ProcessTimeline';
 import DanhMucTab from '../components/DanhMucTab';
+import { exportApplicantsToXlsx, exportImportTemplate, parseXlsxFile } from '../lib/excelUtils';
 
 // =============================================
 // Admin Page Component
@@ -35,6 +36,11 @@ export default function AdminPage() {
   const [alert, setAlert] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [chiBoList, setChiBoList] = useState([]);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importPreview, setImportPreview] = useState([]);
+  const [importErrors, setImportErrors] = useState([]);
+  const [importLoading, setImportLoading] = useState(false);
 
   // Modal states
   const [showApplicantModal, setShowApplicantModal] = useState(false);
@@ -156,6 +162,63 @@ export default function AdminPage() {
     } catch (err) {
       setAlert({ type: 'error', message: err.message });
     }
+  };
+
+  // ---- Export Excel ----
+  const handleExport = () => {
+    try {
+      exportApplicantsToXlsx(applicants);
+      setAlert({ type: 'success', message: 'Xuất file Excel thành công!' });
+    } catch (err) {
+      setAlert({ type: 'error', message: 'Lỗi xuất file: ' + err.message });
+    }
+  };
+
+  // ---- Import Excel ----
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImportFile(file);
+    setImportLoading(true);
+    try {
+      const { data, errors } = await parseXlsxFile(file);
+      setImportPreview(data);
+      setImportErrors(errors);
+    } catch (err) {
+      setImportErrors([err.message]);
+      setImportPreview([]);
+    }
+    setImportLoading(false);
+  };
+
+  const handleImportConfirm = () => {
+    let success = 0;
+    let failed = [];
+    importPreview.forEach((row) => {
+      try {
+        addApplicant(row);
+        success++;
+      } catch (err) {
+        failed.push(`${row.hoTen}: ${err.message}`);
+      }
+    });
+    loadData();
+    setShowImportModal(false);
+    setImportFile(null);
+    setImportPreview([]);
+    setImportErrors([]);
+    if (failed.length === 0) {
+      setAlert({ type: 'success', message: `Đã nhập thành công ${success} hồ sơ!` });
+    } else {
+      setAlert({ type: 'error', message: `Nhập ${success} thành công, ${failed.length} thất bại: ${failed.join('; ')}` });
+    }
+  };
+
+  const handleCloseImport = () => {
+    setShowImportModal(false);
+    setImportFile(null);
+    setImportPreview([]);
+    setImportErrors([]);
   };
 
   // ---- Filter applicants ----
@@ -379,9 +442,20 @@ export default function AdminPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <button className="btn btn-accent" onClick={openAddModal}>
-                ＋ Thêm quần chúng
-              </button>
+              <div className="toolbar-actions">
+                <button className="btn btn-secondary" onClick={() => exportImportTemplate()} title="Tải file mẫu nhập liệu" id="btn-download-template">
+                  📄 File mẫu
+                </button>
+                <button className="btn btn-secondary" onClick={() => setShowImportModal(true)} id="btn-import">
+                  📥 Nhập Excel
+                </button>
+                <button className="btn btn-secondary" onClick={handleExport} disabled={applicants.length === 0} id="btn-export">
+                  📤 Xuất Excel
+                </button>
+                <button className="btn btn-accent" onClick={openAddModal} id="btn-add-applicant">
+                  ＋ Thêm quần chúng
+                </button>
+              </div>
             </div>
 
             {filteredApplicants.length === 0 ? (
@@ -664,6 +738,129 @@ export default function AdminPage() {
               </button>
               <button className="btn btn-danger" onClick={() => handleDelete(showDeleteConfirm)}>
                 Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====== IMPORT EXCEL MODAL ====== */}
+      {showImportModal && (
+        <div className="modal-overlay" onClick={handleCloseImport}>
+          <div className="modal modal-wide" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>📥 Nhập dữ liệu từ Excel</h3>
+              <button className="modal-close" onClick={handleCloseImport}>✕</button>
+            </div>
+            <div className="modal-body">
+              {/* Step 1: Choose file */}
+              <div className="import-step">
+                <div className="import-step-title">
+                  <span className="import-step-num">1</span> Chọn file Excel (.xlsx)
+                </div>
+                <div className="import-file-zone">
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls"
+                    id="import-file-input"
+                    style={{ display: 'none' }}
+                    onChange={handleFileSelect}
+                  />
+                  <label htmlFor="import-file-input" className="import-file-label">
+                    {importFile ? (
+                      <>
+                        <span style={{ fontSize: '1.5rem' }}>📄</span>
+                        <span style={{ fontWeight: 600 }}>{importFile.name}</span>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                          Nhấn để chọn file khác
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ fontSize: '2rem' }}>📂</span>
+                        <span style={{ fontWeight: 600 }}>Nhấn để chọn file Excel</span>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                          Hỗ trợ định dạng .xlsx, .xls
+                        </span>
+                      </>
+                    )}
+                  </label>
+                </div>
+                <div style={{ marginTop: '0.5rem', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                  💡 Chưa có file mẫu?{' '}
+                  <button
+                    type="button"
+                    onClick={() => exportImportTemplate()}
+                    style={{ background: 'none', border: 'none', color: 'var(--color-accent)', cursor: 'pointer', textDecoration: 'underline', fontSize: 'inherit' }}
+                  >
+                    Tải file mẫu nhập liệu
+                  </button>
+                </div>
+              </div>
+
+              {/* Errors */}
+              {importErrors.length > 0 && (
+                <div className="import-errors">
+                  <div className="import-errors-title">⚠️ Phát hiện {importErrors.length} lỗi:</div>
+                  <ul>
+                    {importErrors.map((e, i) => (
+                      <li key={i}>{e}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Step 2: Preview */}
+              {importPreview.length > 0 && (
+                <div className="import-step">
+                  <div className="import-step-title">
+                    <span className="import-step-num">2</span>
+                    Xem trước dữ liệu — {importPreview.length} hồ sơ hợp lệ
+                  </div>
+                  <div className="data-table-wrapper" style={{ maxHeight: '280px', overflowY: 'auto' }}>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>CCCD</th>
+                          <th>Họ tên</th>
+                          <th>Ngày sinh</th>
+                          <th>SĐT</th>
+                          <th>Chi bộ / Đảng bộ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {importPreview.map((row, i) => (
+                          <tr key={i}>
+                            <td>{i + 1}</td>
+                            <td>{row.cccd}</td>
+                            <td style={{ fontWeight: 600 }}>{row.hoTen}</td>
+                            <td style={{ fontSize: 'var(--text-xs)' }}>{row.ngaySinh}</td>
+                            <td style={{ fontSize: 'var(--text-xs)' }}>{row.soDienThoai}</td>
+                            <td style={{ fontSize: 'var(--text-xs)' }}>{row.chiBoDangBo}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {importLoading && (
+                <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--color-text-muted)' }}>
+                  ⏳ Đang đọc file...
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={handleCloseImport}>Hủy</button>
+              <button
+                className="btn btn-primary"
+                onClick={handleImportConfirm}
+                disabled={importPreview.length === 0 || importLoading}
+                id="btn-confirm-import"
+              >
+                ✅ Nhập {importPreview.length > 0 ? `${importPreview.length} hồ sơ` : ''}
               </button>
             </div>
           </div>
