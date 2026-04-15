@@ -103,7 +103,7 @@ export default function AdminPage() {
           <div className="header-inner">
             <Link href="/" className="header-logo">
               <div className="header-logo-icon">☆</div>
-              <div className="header-logo-text">XÂY DỰNG <span>ĐẢNG</span></div>
+            <div className="header-logo-text">XÂY DỰNG <span>ĐẢNG</span><br /><span className="header-logo-sub">Đảng bộ Phường Chánh Hưng, TP.HCM</span></div>
             </Link>
             <nav className="header-nav">
               <Link href="/" className="header-nav-link">🔍 Tra cứu</Link>

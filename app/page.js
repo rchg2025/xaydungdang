@@ -51,7 +51,8 @@ export default function HomePage() {
           <Link href="/" className="header-logo">
             <div className="header-logo-icon">☆</div>
             <div className="header-logo-text">
-              XÂY DỰNG <span>ĐẢNG</span>
+              XÂY DỰNG <span>ĐẢNG</span><br />
+              <span className="header-logo-sub">Đảng bộ Phường Chánh Hưng, TP.HCM</span>
             </div>
           </Link>
           <nav className="header-nav">
@@ -69,7 +70,7 @@ export default function HomePage() {
         </div>
         <h1>
           Tra cứu<br />
-          <span className="gradient-text">Quy trình Kết nạp Đảng</span>
+          <span className="gradient-text">Quy trình tiếp nhận hồ sơ Kết nạp Đảng</span>
         </h1>
         <p>
           Tra cứu nhanh tiến độ quy trình kết nạp Đảng viên bằng số CCCD hoặc Chi bộ/Đảng bộ cơ sở
@@ -271,7 +272,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="footer">
-        <p>© 2025 Hệ Thống Quản Lý Quy Trình Kết Nạp Đảng. Phát triển bởi <a href="#">RCHG 2025</a></p>
+        <p>© 2025 Xây dựng Đảng — Đảng bộ Phường Chánh Hưng, TP.HCM. Phát triển bởi <a href="#">RCHG 2025</a></p>
       </footer>
     </>
   );
