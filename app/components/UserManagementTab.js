@@ -9,6 +9,7 @@ import {
   resetPassword,
   ROLES,
   ROLE_LABELS,
+  SUPERADMIN_USERNAME,
 } from '../lib/userStore';
 
 // =============================================
@@ -35,8 +36,11 @@ export default function UserManagementTab({ onAlert, currentUser }) {
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
+  // Ắn superadmin khỏi danh sách
+  const visibleUsers = users.filter((u) => u.username !== SUPERADMIN_USERNAME);
+
   // ---- Filtered ----
-  const filtered = users.filter(u => {
+  const filtered = visibleUsers.filter(u => {
     if (!searchTerm) return true;
     const t = searchTerm.toLowerCase();
     return u.hoTen.toLowerCase().includes(t) ||
@@ -65,7 +69,7 @@ export default function UserManagementTab({ onAlert, currentUser }) {
         hoTen: formData.hoTen,
         email: formData.email,
         role: formData.role,
-        username: formData.username,
+        // username không cập nhật vì field đã bị khóa
       });
       loadUsers();
       setEditingUser(null);
@@ -143,7 +147,7 @@ export default function UserManagementTab({ onAlert, currentUser }) {
         <div className="danhmuc-panel-header">
           <h3 className="danhmuc-panel-title">Danh sách Thành viên</h3>
           <p className="danhmuc-panel-desc">
-            {filtered.length} / {users.length} thành viên
+            {filtered.length} / {visibleUsers.length} thành viên
           </p>
         </div>
 
@@ -210,14 +214,17 @@ export default function UserManagementTab({ onAlert, currentUser }) {
                         >
                           🔑
                         </button>
-                        <button
-                          className="btn btn-sm btn-secondary"
-                          onClick={() => handleToggleActive(u)}
-                          title={u.active ? 'Vô hiệu hóa' : 'Kích hoạt'}
-                        >
-                          {u.active ? '⛔' : '✅'}
-                        </button>
-                        {u.id !== currentUser?.id && (
+                        {/* Ẩn nút vô hiệu hóa và xóa với superadmin */}
+                        {u.username !== SUPERADMIN_USERNAME && (
+                          <button
+                            className="btn btn-sm btn-secondary"
+                            onClick={() => handleToggleActive(u)}
+                            title={u.active ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                          >
+                            {u.active ? '⛔' : '✅'}
+                          </button>
+                        )}
+                        {u.username !== SUPERADMIN_USERNAME && u.id !== currentUser?.id && (
                           <button
                             className="btn btn-sm btn-danger"
                             onClick={() => setDeletingUser(u)}
@@ -336,12 +343,18 @@ export default function UserManagementTab({ onAlert, currentUser }) {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Tên đăng nhập *</label>
+                    <label>Tên đăng nhập</label>
                     <input
-                      type="text" className="form-input" required
+                      type="text"
+                      className="form-input"
                       value={formData.username}
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      readOnly
+                      style={{ opacity: 0.6, cursor: 'not-allowed', background: 'var(--color-surface)' }}
+                      title="Tên đăng nhập không thể chỉnh sửa"
                     />
+                    <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                      🔒 Tên đăng nhập không thể thay đổi sau khi tạo.
+                    </p>
                   </div>
                 </div>
                 <div className="form-row">

@@ -263,7 +263,7 @@ export default function AdminPage() {
           <div className="header-inner">
             <Link href="/" className="header-logo">
               <div className="header-logo-icon">☆</div>
-            <div className="header-logo-text">XÂY DỰNG <span>ĐẢNG</span><br /><span className="header-logo-sub">Đảng bộ Phường Chánh Hưng, TP.HCM</span></div>
+              <div className="header-logo-text">XÂY DỰNG <span>ĐẢNG</span><br /><span className="header-logo-sub">Đảng bộ Phường Chánh Hưng, TP.HCM</span></div>
             </Link>
             <nav className="header-nav">
               <Link href="/" className="header-nav-link">🔍 Tra cứu</Link>
@@ -354,7 +354,7 @@ export default function AdminPage() {
                       <div className="otp-icon">🔢</div>
                       <h3>Nhập mã OTP</h3>
                       <p>
-                        Mã xác thực 6 số đã được gửi đến<br/>
+                        Mã xác thực 6 số đã được gửi đến<br />
                         <strong>{fpEmail}</strong>
                       </p>
                     </div>
@@ -598,7 +598,7 @@ export default function AdminPage() {
 
         {/* Footer */}
         <footer style={{ textAlign: 'center', marginTop: '3rem', padding: '1.5rem 0', borderTop: '1px solid var(--color-border)', color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
-          © 2025 Xây dựng Đảng — Đảng bộ Phường Chánh Hưng. Phát triển bởi <a href="https://rongcon.net" target="_blank" rel="noopener noreferrer" style={{color: 'var(--color-accent)'}}>Rồng Con HG</a>
+          © 2025 Xây dựng Đảng — Đảng bộ Phường Chánh Hưng. Phát triển bởi <a href="https://rongcon.net" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)' }}>Rồng Con HG</a>
         </footer>
       </div>
     </>

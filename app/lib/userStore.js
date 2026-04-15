@@ -5,6 +5,9 @@
 const USERS_KEY = 'xaydungdang_users';
 const SESSION_KEY = 'xaydungdang_session';
 
+// Tài khoản superadmin cố định — không thể xóa, vô hiệu, hoặc đổi vai trò
+export const SUPERADMIN_USERNAME = 'qtv';
+
 // ---- Roles ----
 export const ROLES = {
   ADMIN: 'admin',
@@ -155,6 +158,19 @@ export function updateUser(id, updates) {
   const idx = users.findIndex((u) => u.id === id);
   if (idx === -1) throw new Error('Không tìm thấy người dùng!');
 
+  // Bảo vệ superadmin: không đổi username, role, hoặc vô hiệu hóa
+  if (users[idx].username === SUPERADMIN_USERNAME) {
+    if (updates.username !== undefined && updates.username !== SUPERADMIN_USERNAME) {
+      throw new Error('Không thể thay đổi tên đăng nhập của tài khoản Superadmin!');
+    }
+    if (updates.role !== undefined && updates.role !== ROLES.ADMIN) {
+      throw new Error('Không thể thay đổi vai trò của tài khoản Superadmin!');
+    }
+    if (updates.active === false) {
+      throw new Error('Không thể vô hiệu hóa tài khoản Superadmin!');
+    }
+  }
+
   // Prevent duplicate username
   if (updates.username && updates.username !== users[idx].username) {
     if (users.some((u) => u.username === updates.username.trim() && u.id !== id)) {
@@ -177,6 +193,11 @@ export function deleteUser(id) {
   const users = getUsers();
   const user = users.find((u) => u.id === id);
   if (!user) throw new Error('Không tìm thấy người dùng!');
+
+  // Bảo vệ superadmin: không bao giờ có thể xóa
+  if (user.username === SUPERADMIN_USERNAME) {
+    throw new Error('Không thể xóa tài khoản Superadmin!');
+  }
 
   // Prevent deleting the last admin
   const adminCount = users.filter((u) => u.role === ROLES.ADMIN && u.active).length;
