@@ -37,9 +37,9 @@ export default function UserManagementTab({ onAlert, currentUser }) {
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
   // Ẩn superadmin khỏi danh sách — trừ khi chính tài khoản qtv đang đăng nhập
-  const visibleUsers = users.filter((u) =>
-    u.username !== SUPERADMIN_USERNAME || currentUser?.username === SUPERADMIN_USERNAME
-  );
+  const visibleUsers = users
+    .filter((u) => u.username !== SUPERADMIN_USERNAME || currentUser?.username === SUPERADMIN_USERNAME)
+    .sort((a, b) => new Date(b.ngayTao) - new Date(a.ngayTao)); // Mới nhất lên đầu
 
   // ---- Filtered ----
   const filtered = visibleUsers.filter(u => {

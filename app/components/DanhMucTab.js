@@ -157,10 +157,12 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
     s.tenQuyTrinh.toLowerCase().includes(stepSearch.toLowerCase())
   );
 
-  const filteredChiBo = chiBoList.filter(cb =>
-    (cb.ten || '').toLowerCase().includes(chiBoSearch.toLowerCase()) ||
-    (cb.biThu || '').toLowerCase().includes(chiBoSearch.toLowerCase())
-  );
+  const filteredChiBo = [...chiBoList]
+    .reverse() // Mới nhất lên đầu
+    .filter(cb =>
+      (cb.ten || '').toLowerCase().includes(chiBoSearch.toLowerCase()) ||
+      (cb.biThu || '').toLowerCase().includes(chiBoSearch.toLowerCase())
+    );
 
   return (
     <div className="danhmuc-container">
