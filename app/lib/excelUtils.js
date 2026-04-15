@@ -34,11 +34,13 @@ export const IMPORT_TEMPLATE_HEADERS = [
 // ---- Lấy trạng thái tổng thể ----
 function getOverallStatus(applicant) {
   const hasHuy = applicant.quyTrinh.some((s) => s.trangThai === STATUSES.HUY_HO_SO);
-  if (hasHuy) return 'Hủy hồ sơ';
+  if (hasHuy) return 'Hồ sơ bị từ chối';
   const allDone = applicant.quyTrinh.every((s) => s.trangThai === STATUSES.DA_NHAN_PHAN_HOI);
   if (allDone) return 'Hoàn thành';
   const hasDang = applicant.quyTrinh.some((s) => s.trangThai === STATUSES.DANG_XU_LY);
   if (hasDang) return 'Đang xử lý';
+  const hasGui = applicant.quyTrinh.some((s) => s.trangThai === STATUSES.DA_GUI);
+  if (hasGui) return 'Đã gửi';
   return 'Chờ xử lý';
 }
 
@@ -51,7 +53,7 @@ function getProgress(applicant) {
 // ---- Bước hiện tại ----
 function getCurrentStepLabel(applicant) {
   const hasHuy = applicant.quyTrinh.some((s) => s.trangThai === STATUSES.HUY_HO_SO);
-  if (hasHuy) return 'Hủy';
+  if (hasHuy) return 'Hồ sơ bị từ chối';
   let last = 0;
   applicant.quyTrinh.forEach((s) => {
     if (s.trangThai === STATUSES.DA_NHAN_PHAN_HOI) last = s.soThuTu;
@@ -63,7 +65,7 @@ function getCurrentStepLabel(applicant) {
 // =============================================
 // EXPORT
 // =============================================
-export function exportApplicantsToXlsx(applicants) {
+export function exportApplicantsToXlsx(applicants, label) {
   // --- Sheet 1: Danh sách quần chúng ---
   const rows = applicants.map((a, i) => ({
     STT: i + 1,
@@ -142,7 +144,8 @@ export function exportApplicantsToXlsx(applicants) {
   XLSX.utils.book_append_sheet(wb, ws3, 'Mẫu Nhập Liệu');
 
   const today = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(wb, `DanhSachQuanChung_${today}.xlsx`);
+  const suffix = label ? `_${label}` : '';
+  XLSX.writeFile(wb, `DanhSachQuanChung${suffix}_${today}.xlsx`);
 }
 
 // =============================================

@@ -15,6 +15,27 @@ import ProcessTimeline from './ProcessTimeline';
 
 const PAGE_SIZE = 10;
 
+// Trạng thái tổng thể của 1 hồ sơ
+function getApplicantStatus(a) {
+  const hasHuy = a.quyTrinh.some(s => s.trangThai === STATUSES.HUY_HO_SO);
+  if (hasHuy) return 'huy_ho_so';
+  const allDone = a.quyTrinh.every(s => s.trangThai === STATUSES.DA_NHAN_PHAN_HOI);
+  if (allDone) return 'hoan_thanh';
+  const hasDang = a.quyTrinh.some(s => s.trangThai === STATUSES.DANG_XU_LY);
+  if (hasDang) return 'dang_xu_ly';
+  const hasGui = a.quyTrinh.some(s => s.trangThai === STATUSES.DA_GUI);
+  if (hasGui) return 'da_gui';
+  return 'cho_xu_ly';
+}
+
+const STATUS_FILTER_OPTIONS = [
+  { value: 'dang_xu_ly', label: '🔄 Đang xử lý' },
+  { value: 'da_gui',     label: '📤 Đã gửi'     },
+  { value: 'hoan_thanh', label: '✅ Hoàn thành'  },
+  { value: 'cho_xu_ly',  label: '⏳ Chờ xử lý'  },
+  { value: 'huy_ho_so',  label: '❌ Hồ sơ bị từ chối' },
+];
+
 function Paginator({ page, total, onPage, totalItems }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
@@ -41,6 +62,12 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
 
+  // ---- Bộ lọc mới ----
+  const [selectedStatuses, setSelectedStatuses] = useState([]); // multi-select
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo]     = useState('');
+  const [showFilterBar, setShowFilterBar] = useState(false);
+
   // Modals
   const [showApplicantModal, setShowApplicantModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
@@ -60,12 +87,41 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
     cccd: '', hoTen: '', ngaySinh: '', soDienThoai: '', email: '', chiBoDangBo: '',
   });
 
+  // Toggle status in multi-select
+  const toggleStatus = (val) => {
+    setSelectedStatuses(prev =>
+      prev.includes(val) ? prev.filter(s => s !== val) : [...prev, val]
+    );
+    setPage(1);
+  };
+
+  const clearFilters = () => {
+    setSelectedStatuses([]);
+    setDateFrom('');
+    setDateTo('');
+    setSearchTerm('');
+    setPage(1);
+  };
+
+  const hasActiveFilter = selectedStatuses.length > 0 || dateFrom || dateTo;
+
   // Sort newest first + filter
   const sorted = [...applicants].sort((a, b) => new Date(b.ngayTao) - new Date(a.ngayTao));
   const filtered = sorted.filter(a => {
-    if (!searchTerm) return true;
-    const t = searchTerm.toLowerCase();
-    return a.hoTen.toLowerCase().includes(t) || a.cccd.includes(t) || a.chiBoDangBo.toLowerCase().includes(t);
+    // Text search
+    if (searchTerm) {
+      const t = searchTerm.toLowerCase();
+      if (!a.hoTen.toLowerCase().includes(t) && !a.cccd.includes(t) && !a.chiBoDangBo.toLowerCase().includes(t)) return false;
+    }
+    // Status filter
+    if (selectedStatuses.length > 0) {
+      if (!selectedStatuses.includes(getApplicantStatus(a))) return false;
+    }
+    // Date from
+    if (dateFrom && a.ngayTao < dateFrom) return false;
+    // Date to
+    if (dateTo && a.ngayTao > dateTo) return false;
+    return true;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -122,11 +178,17 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
     }
   };
 
-  // ---- Export ----
+  // ---- Export (filtered) ----
   const handleExport = () => {
     try {
-      exportApplicantsToXlsx(applicants);
-      onAlert({ type: 'success', message: 'Xuất file Excel thành công!' });
+      const label = [
+        hasActiveFilter && 'bo-loc',
+        selectedStatuses.length > 0 && selectedStatuses.join('-'),
+        dateFrom && `tu-${dateFrom}`,
+        dateTo && `den-${dateTo}`,
+      ].filter(Boolean).join('_');
+      exportApplicantsToXlsx(filtered, label || undefined);
+      onAlert({ type: 'success', message: `Xuất ${filtered.length} hồ sơ ra Excel thành công!` });
     } catch (err) {
       onAlert({ type: 'error', message: 'Lỗi xuất file: ' + err.message });
     }
@@ -196,16 +258,74 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
           />
         </div>
         <div className="toolbar-actions">
+          <button
+            className={`btn btn-secondary ${showFilterBar ? 'active' : ''} ${hasActiveFilter ? 'filter-active' : ''}`}
+            onClick={() => setShowFilterBar(v => !v)}
+            id="btn-filter"
+          >
+            📂 Bộ lọc {hasActiveFilter && <span className="filter-badge">{selectedStatuses.length + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0)}</span>}
+          </button>
           {userIsAdmin && (
             <>
               <button className="btn btn-secondary" onClick={() => exportImportTemplate()} id="btn-download-template">📄 File mẫu</button>
               <button className="btn btn-secondary" onClick={() => setShowImportModal(true)} id="btn-import">📥 Nhập Excel</button>
-              <button className="btn btn-secondary" onClick={handleExport} disabled={applicants.length === 0} id="btn-export">📤 Xuất Excel</button>
+              <button className="btn btn-secondary" onClick={handleExport} disabled={filtered.length === 0} id="btn-export" title={`Xuất ${filtered.length} hồ sơ hiện tại`}>📤 Xuất Excel ({filtered.length})</button>
             </>
           )}
           <button className="btn btn-accent" onClick={openAdd} id="btn-add-applicant">＋ Thêm quần chúng</button>
         </div>
       </div>
+
+      {/* Filter Bar */}
+      {showFilterBar && (
+        <div className="filter-bar">
+          <div className="filter-bar-section">
+            <div className="filter-bar-label">🟢 Trạng thái tiến độ</div>
+            <div className="filter-status-chips">
+              {STATUS_FILTER_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  className={`filter-chip ${selectedStatuses.includes(opt.value) ? 'selected' : ''}`}
+                  onClick={() => toggleStatus(opt.value)}
+                >
+                  {opt.label}
+                  {selectedStatuses.includes(opt.value) && <span className="chip-check">✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="filter-bar-section">
+            <div className="filter-bar-label">📅 Thời gian tạo hồ sơ</div>
+            <div className="filter-date-range">
+              <div className="filter-date-field">
+                <span className="filter-date-label">Từ ngày</span>
+                <input
+                  type="date"
+                  className="form-input filter-date-input"
+                  value={dateFrom}
+                  onChange={e => { setDateFrom(e.target.value); setPage(1); }}
+                />
+              </div>
+              <span className="filter-date-sep">→</span>
+              <div className="filter-date-field">
+                <span className="filter-date-label">Đến ngày</span>
+                <input
+                  type="date"
+                  className="form-input filter-date-input"
+                  value={dateTo}
+                  onChange={e => { setDateTo(e.target.value); setPage(1); }}
+                />
+              </div>
+            </div>
+          </div>
+          {hasActiveFilter && (
+            <div className="filter-bar-actions">
+              <span className="filter-result-count">→ Đang lọc: <strong>{filtered.length}</strong> hồ sơ</span>
+              <button className="btn btn-sm btn-secondary" onClick={clearFilters}>✕ Xóa bộ lọc</button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Table */}
       {filtered.length === 0 ? (

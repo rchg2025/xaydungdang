@@ -1785,6 +1785,150 @@ input, select, textarea, button {
   flex-wrap: wrap;
 }
 
+/* ---- Filter Bar ---- */
+.filter-bar {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: fadeInUp 0.2s ease;
+}
+
+.filter-bar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-bar-label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filter-status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.filter-chip:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
+  background: var(--color-surface-hover);
+}
+
+.filter-chip.selected {
+  background: rgba(196, 30, 58, 0.1);
+  border-color: var(--color-primary);
+  color: var(--color-primary-light);
+}
+
+.chip-check {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--color-primary-light);
+}
+
+.filter-date-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-date-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-date-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.filter-date-input {
+  padding: 6px 10px !important;
+  font-size: var(--text-xs) !important;
+  width: auto !important;
+  min-width: 140px;
+}
+
+.filter-date-sep {
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+}
+
+.filter-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+.filter-result-count {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.filter-result-count strong {
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+}
+
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: white;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 800;
+  width: 18px;
+  height: 18px;
+  margin-left: 4px;
+}
+
+.filter-active {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary-light) !important;
+}
+
+@media (max-width: 600px) {
+  .filter-date-range {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .filter-date-sep { display: none; }
+}
+
 /* ---- Import Steps ---- */
 .import-step {
   margin-bottom: 1.5rem;
