@@ -20,7 +20,10 @@ export async function GET(request) {
     }
 
     const results = await Applicant.find(query).lean();
-    const data = results.map(a => ({ ...a, id: a._id.toString(), _id: undefined }));
+    const data = results.map(a => {
+      if (a.quyTrinh) a.quyTrinh.sort((x, y) => x.soThuTu - y.soThuTu);
+      return { ...a, id: a._id.toString(), _id: undefined };
+    });
     return Response.json(data);
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });

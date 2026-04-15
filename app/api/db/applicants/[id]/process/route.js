@@ -25,6 +25,7 @@ export async function PUT(request, { params }) {
     await applicant.save();
 
     const result = applicant.toObject();
+    if (result.quyTrinh) result.quyTrinh.sort((x, y) => x.soThuTu - y.soThuTu);
     return Response.json({ ...result, id: result._id.toString(), _id: undefined });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });

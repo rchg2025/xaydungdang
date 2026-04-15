@@ -9,8 +9,11 @@ export async function GET() {
     await connectDB();
     await seedDatabase();
     const applicants = await Applicant.find({}).sort({ createdAt: -1 }).lean();
-    // Convert _id to id string
-    const data = applicants.map(a => ({ ...a, id: a._id.toString(), _id: undefined }));
+    // Convert _id to id string and sort quyTrinh
+    const data = applicants.map(a => {
+      if (a.quyTrinh) a.quyTrinh.sort((x, y) => x.soThuTu - y.soThuTu);
+      return { ...a, id: a._id.toString(), _id: undefined };
+    });
     return Response.json(data);
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
