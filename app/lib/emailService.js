@@ -2,7 +2,9 @@
 // Email Service - Gmail via Next.js API Route
 // =============================================
 
-import { processTemplate } from './emailTemplateStore';
+import { processTemplate, TEMPLATE_TYPES } from './emailTemplateStore';
+import { getChiBoList } from './store';
+import { STATUS_LABELS } from './constants';
 
 // =============================================
 // SEND EMAIL qua API Route /api/send-email
@@ -33,6 +35,33 @@ export async function sendEmail(templateType, recipientEmail, data = {}) {
 
   return result;
 }
+
+// =============================================
+// GỬI THÔNG BÁO CẬP NHẬT BƯỚC → EMAIL CHI BỘ
+// =============================================
+export async function sendChiBoStatusNotification(applicant, step, trangThaiLabel, nguoiGui = '') {
+  // Tìm chi bộ trong danh mục
+  const chiBoList = getChiBoList();
+  const chiBoObj = chiBoList.find((cb) => cb.ten === applicant.chiBoDangBo);
+
+  const emailChiBo = chiBoObj?.email?.trim();
+  if (!emailChiBo) {
+    // Không có email chi bộ → bỏ qua, không báo lỗi
+    return null;
+  }
+
+  return sendEmail(TEMPLATE_TYPES.CAP_NHAT_BUOC, emailChiBo, {
+    hoTen: applicant.hoTen,
+    cccd: applicant.cccd,
+    chiBo: applicant.chiBoDangBo,
+    buocHienTai: String(step.soThuTu),
+    tenBuoc: step.tenQuyTrinh,
+    trangThai: trangThaiLabel,
+    tongBuoc: String(applicant.quyTrinh.length),
+    nguoiGui,
+  });
+}
+
 
 // =============================================
 // TEST - gửi email test đến địa chỉ cho trước

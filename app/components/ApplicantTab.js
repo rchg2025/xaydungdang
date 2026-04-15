@@ -11,6 +11,7 @@ import {
 } from '../lib/store';
 import { STATUS_LABELS, STATUSES } from '../lib/constants';
 import { exportApplicantsToXlsx, exportImportTemplate, parseXlsxFile } from '../lib/excelUtils';
+import { sendChiBoStatusNotification } from '../lib/emailService';
 import ProcessTimeline from './ProcessTimeline';
 
 const PAGE_SIZE = 10;
@@ -166,13 +167,29 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
   // ---- Process update ----
   const openProcess = (a) => { setSelectedApplicant(a); setShowProcessModal(true); };
 
-  const handleUpdateStep = (soThuTu, trangThai) => {
+  const handleUpdateStep = async (soThuTu, trangThai) => {
     try {
       updateProcessStep(selectedApplicant.id, soThuTu, trangThai, '', currentUser?.hoTen || '');
       const updated = getAllApplicants().find(a => a.id === selectedApplicant.id);
       setSelectedApplicant(updated);
       onReload();
       onAlert({ type: 'success', message: `Cập nhật bước ${soThuTu} thành công!` });
+
+      // Gửi email thông báo cho chi bộ (nếu chi bộ có email)
+      const step = updated.quyTrinh.find(s => s.soThuTu === soThuTu);
+      if (step) {
+        try {
+          const result = await sendChiBoStatusNotification(
+            updated, step, STATUS_LABELS[trangThai] || trangThai, currentUser?.hoTen || ''
+          );
+          if (result) {
+            onAlert({ type: 'success', message: '📧 Đã gửi email thông báo cho Chi bộ/Đảng bộ!' });
+          }
+        } catch (emailErr) {
+          // Không block nếu gửi email thất bại
+          console.warn('Email notification failed:', emailErr);
+        }
+      }
     } catch (err) {
       onAlert({ type: 'error', message: err.message });
     }

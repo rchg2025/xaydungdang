@@ -12,6 +12,7 @@ export const TEMPLATE_TYPES = {
   HOAN_THANH: 'hoan_thanh',
   HUY_HO_SO: 'huy_ho_so',
   THONG_BAO: 'thong_bao',
+  CAP_NHAT_BUOC: 'cap_nhat_buoc',
 };
 
 export const TEMPLATE_LABELS = {
@@ -20,6 +21,7 @@ export const TEMPLATE_LABELS = {
   hoan_thanh: '✅ Thông báo Hoàn thành',
   huy_ho_so: '❌ Thông báo Hủy hồ sơ',
   thong_bao: '📢 Thông báo chung',
+  cap_nhat_buoc: '🔔 Cập nhật Bước → Chi bộ',
 };
 
 // ---- Template variables user can use ----
@@ -27,7 +29,9 @@ export const TEMPLATE_VARIABLES = [
   { key: '{{hoTen}}', label: 'Họ tên quần chúng' },
   { key: '{{cccd}}', label: 'Số CCCD' },
   { key: '{{chiBo}}', label: 'Chi bộ/Đảng bộ' },
-  { key: '{{buocHienTai}}', label: 'Bước hiện tại' },
+  { key: '{{buocHienTai}}', label: 'Số bước hiện tại' },
+  { key: '{{tenBuoc}}', label: 'Tên bước quy trình' },
+  { key: '{{trangThai}}', label: 'Trạng thái bước' },
   { key: '{{tongBuoc}}', label: 'Tổng số bước' },
   { key: '{{ngay}}', label: 'Ngày hiện tại' },
   { key: '{{nguoiGui}}', label: 'Tên người gửi' },
@@ -88,6 +92,27 @@ Trân trọng,
 
 Trân trọng,
 {{nguoiGui}}`,
+  },
+  cap_nhat_buoc: {
+    subject: '[Cập nhật Hồ sơ] {{hoTen}} - Bước {{buocHienTai}}: {{tenBuoc}}',
+    body: `Kính gửi Ban Lãnh đạo {{chiBo}},
+
+Hệ thống Quản lý Quy trình Kết nạp Đảng xin thông báo:
+
+Hồ sơ quần chúng vừa được cập nhật trạng thái:
+
+- Họ tên: {{hoTen}}
+- Số CCCD: {{cccd}}
+- Chi bộ/Đảng bộ: {{chiBo}}
+- Bước đang xử lý: Bước {{buocHienTai}}/{{tongBuoc}} — {{tenBuoc}}
+- Trạng thái: {{trangThai}}
+- Ngày cập nhật: {{ngay}}
+- Người cập nhật: {{nguoiGui}}
+
+Vui lòng kiểm tra hệ thống để biết thêm chi tiết.
+
+Trân trọng,
+Hệ thống Quản lý Kết nạp Đảng`,
   },
 };
 
@@ -168,6 +193,8 @@ export function processTemplate(templateType, data = {}) {
     '{{cccd}}': data.cccd || '079201001234',
     '{{chiBo}}': data.chiBo || 'Chi bộ ...',
     '{{buocHienTai}}': data.buocHienTai || '1',
+    '{{tenBuoc}}': data.tenBuoc || 'Nộp đơn xin vào Đảng',
+    '{{trangThai}}': data.trangThai || 'Đang xử lý',
     '{{tongBuoc}}': data.tongBuoc || '10',
     '{{ngay}}': now.toLocaleDateString('vi-VN'),
     '{{nguoiGui}}': data.nguoiGui || 'Quản trị viên',
