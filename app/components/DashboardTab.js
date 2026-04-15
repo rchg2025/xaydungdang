@@ -39,29 +39,39 @@ export default function DashboardTab({ applicants, stats }) {
       {/* Stats */}
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa' }}>📁</div>
-          <div className="stat-card-value" style={{ color: '#60a5fa' }}>{stats.tongSo}</div>
-          <div className="stat-card-label">Tổng hồ sơ</div>
+          <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.12)', color: '#60a5fa', boxShadow: '0 0 0 1px rgba(59,130,246,0.2)' }}>📁</div>
+          <div className="stat-card-body">
+            <div className="stat-card-value" style={{ color: '#60a5fa' }}>{stats.tongSo}</div>
+            <div className="stat-card-label">Tổng hồ sơ</div>
+          </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6' }}>🔄</div>
-          <div className="stat-card-value" style={{ color: '#3b82f6' }}>{stats.dangXuLy}</div>
-          <div className="stat-card-label">Đang xử lý</div>
+          <div className="stat-card-icon" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', boxShadow: '0 0 0 1px rgba(99,102,241,0.2)' }}>🔄</div>
+          <div className="stat-card-body">
+            <div className="stat-card-value" style={{ color: '#818cf8' }}>{stats.dangXuLy}</div>
+            <div className="stat-card-label">Đang xử lý</div>
+          </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399' }}>✅</div>
-          <div className="stat-card-value" style={{ color: '#10b981' }}>{stats.daHoanThanh}</div>
-          <div className="stat-card-label">Hoàn thành</div>
+          <div className="stat-card-icon" style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399', boxShadow: '0 0 0 1px rgba(16,185,129,0.2)' }}>✅</div>
+          <div className="stat-card-body">
+            <div className="stat-card-value" style={{ color: '#10b981' }}>{stats.daHoanThanh}</div>
+            <div className="stat-card-label">Hoàn thành</div>
+          </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24' }}>⏳</div>
-          <div className="stat-card-value" style={{ color: '#f59e0b' }}>{stats.choXuLy}</div>
-          <div className="stat-card-label">Chờ xử lý</div>
+          <div className="stat-card-icon" style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', boxShadow: '0 0 0 1px rgba(245,158,11,0.2)' }}>⏳</div>
+          <div className="stat-card-body">
+            <div className="stat-card-value" style={{ color: '#f59e0b' }}>{stats.choXuLy}</div>
+            <div className="stat-card-label">Chờ xử lý</div>
+          </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171' }}>❌</div>
-          <div className="stat-card-value" style={{ color: '#ef4444' }}>{stats.daHuy}</div>
-          <div className="stat-card-label">Đã hủy</div>
+          <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', boxShadow: '0 0 0 1px rgba(239,68,68,0.2)' }}>❌</div>
+          <div className="stat-card-body">
+            <div className="stat-card-value" style={{ color: '#ef4444' }}>{stats.daHuy}</div>
+            <div className="stat-card-label">Đã hủy</div>
+          </div>
         </div>
       </div>
 
