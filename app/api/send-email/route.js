@@ -58,7 +58,7 @@ export async function POST(request) {
                   <tr>
                     <td style="background-color: #b71c1c; text-align: center; padding: 25px 20px; border-bottom: 4px solid #ffca28;">
                       <h2 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-                        XÂY DỰNG ĐẢNG
+                        ĐẢNG BỘ PHƯỜNG CHÁNH HƯNG, TP.HỒ CHÍ MINH
                       </h2>
                     </td>
                   </tr>

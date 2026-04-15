@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { updateProcessStepAPI, getCurrentStep } from '../lib/apiClient';
+import { sendChiBoStatusNotification } from '../lib/emailService';
 import { STATUS_LABELS, STATUSES } from '../lib/constants';
 import ProcessTimeline from './ProcessTimeline';
 
@@ -27,6 +28,21 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
         ? `Lý do từ chối: ${lyDo.trim()}`
         : lyDo.trim();
       await updateProcessStepAPI(applicantId, soThuTu, trangThai, ghiChu, currentUser?.hoTen || '');
+      
+      // Send email notification dynamically
+      try {
+        const applicant = applicants.find(a => a.id === applicantId);
+        if (applicant) {
+          const stepObj = applicant.quyTrinh.find(s => s.soThuTu === soThuTu);
+          if (stepObj) {
+            await sendChiBoStatusNotification(applicant, { soThuTu, tenQuyTrinh: stepObj.tenQuyTrinh }, STATUS_LABELS[trangThai], currentUser?.hoTen || '');
+          }
+        }
+      } catch (emailErr) {
+        console.error('Email failed: ', emailErr);
+        // ignore email err to keep the UI smooth
+      }
+
       onReload();
       onAlert({ type: 'success', message: `Đã cập nhật bước ${soThuTu}!` });
       setEditingStep(null);
