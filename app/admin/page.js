@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -11,15 +11,15 @@ import {
   getStatistics,
   initializeData,
   getCurrentStep,
+  getChiBoList,
 } from '../lib/store';
 import {
   ADMIN_CREDENTIALS,
   STATUS_LABELS,
   STATUSES,
-  CHI_BO_LIST,
-  DEFAULT_PROCESS_STEPS,
 } from '../lib/constants';
 import ProcessTimeline from '../components/ProcessTimeline';
+import DanhMucTab from '../components/DanhMucTab';
 
 // =============================================
 // Admin Page Component
@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [stats, setStats] = useState(null);
   const [alert, setAlert] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [chiBoList, setChiBoList] = useState([]);
 
   // Modal states
   const [showApplicantModal, setShowApplicantModal] = useState(false);
@@ -61,6 +62,7 @@ export default function AdminPage() {
     const data = getAllApplicants();
     setApplicants(data);
     setStats(getStatistics());
+    setChiBoList(getChiBoList());
   }, []);
 
   useEffect(() => {
@@ -259,20 +261,30 @@ export default function AdminPage() {
           <button 
             className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('dashboard')}
+            id="tab-dashboard"
           >
             📊 Tổng quan
           </button>
           <button
             className={`tab-btn ${activeTab === 'applicants' ? 'active' : ''}`}
             onClick={() => setActiveTab('applicants')}
+            id="tab-applicants"
           >
             👥 Quần chúng
           </button>
           <button
             className={`tab-btn ${activeTab === 'processes' ? 'active' : ''}`}
             onClick={() => setActiveTab('processes')}
+            id="tab-processes"
           >
             📋 Quy trình
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'danhmuc' ? 'active' : ''}`}
+            onClick={() => setActiveTab('danhmuc')}
+            id="tab-danhmuc"
+          >
+            🗂️ Danh mục
           </button>
         </div>
 
@@ -481,6 +493,14 @@ export default function AdminPage() {
             )}
           </>
         )}
+
+        {/* ====== DANH MUC TAB ====== */}
+        {activeTab === 'danhmuc' && (
+          <DanhMucTab
+            onAlert={setAlert}
+            onChiBoChanged={loadData}
+          />
+        )}
       </div>
 
       {/* ====== MODALS ====== */}
@@ -565,7 +585,7 @@ export default function AdminPage() {
                     required
                   >
                     <option value="">-- Chọn chi bộ / đảng bộ --</option>
-                    {CHI_BO_LIST.map((cb) => (
+                    {chiBoList.map((cb) => (
                       <option key={cb} value={cb}>{cb}</option>
                     ))}
                   </select>

@@ -2,10 +2,12 @@
 // Data Store - LocalStorage Management
 // =============================================
 
-import { DEFAULT_PROCESS_STEPS, STATUSES } from './constants';
+import { DEFAULT_PROCESS_STEPS, STATUSES, CHI_BO_LIST } from './constants';
 
 const STORAGE_KEY = 'xaydungdang_applicants';
 const INIT_KEY = 'xaydungdang_initialized';
+const CHI_BO_STORAGE_KEY = 'xaydungdang_chibo_list';
+const PROCESS_STEPS_KEY = 'xaydungdang_process_steps';
 
 // ---- Dữ liệu mẫu ----
 const SAMPLE_DATA = [
@@ -302,4 +304,158 @@ export function resetData() {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(INIT_KEY);
   initializeData();
+}
+
+// =============================================
+// Quản lý Danh mục Chi bộ / Đảng bộ
+// =============================================
+
+// ---- Lấy danh sách chi bộ ----
+export function getChiBoList() {
+  if (typeof window === 'undefined') return CHI_BO_LIST;
+  try {
+    const data = localStorage.getItem(CHI_BO_STORAGE_KEY);
+    if (data) return JSON.parse(data);
+    // Khởi tạo lần đầu từ constants
+    localStorage.setItem(CHI_BO_STORAGE_KEY, JSON.stringify(CHI_BO_LIST));
+    return CHI_BO_LIST;
+  } catch {
+    return CHI_BO_LIST;
+  }
+}
+
+// ---- Lưu danh sách chi bộ ----
+function saveChiBoList(list) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(CHI_BO_STORAGE_KEY, JSON.stringify(list));
+}
+
+// ---- Thêm chi bộ mới ----
+export function addChiBo(tenChiBo) {
+  const list = getChiBoList();
+  const trimmed = tenChiBo.trim();
+  if (!trimmed) throw new Error('Tên chi bộ không được để trống!');
+  if (list.includes(trimmed)) throw new Error('Chi bộ/Đảng bộ này đã tồn tại!');
+  list.push(trimmed);
+  saveChiBoList(list);
+  return list;
+}
+
+// ---- Cập nhật tên chi bộ ----
+export function updateChiBo(oldName, newName) {
+  const list = getChiBoList();
+  const trimmedNew = newName.trim();
+  if (!trimmedNew) throw new Error('Tên chi bộ không được để trống!');
+  const idx = list.indexOf(oldName);
+  if (idx === -1) throw new Error('Không tìm thấy chi bộ!');
+  if (list.includes(trimmedNew) && trimmedNew !== oldName) throw new Error('Tên chi bộ đã tồn tại!');
+  list[idx] = trimmedNew;
+  saveChiBoList(list);
+
+  // Cập nhật tên chi bộ trong tất cả hồ sơ
+  const applicants = getAllApplicants();
+  applicants.forEach(a => {
+    if (a.chiBoDangBo === oldName) a.chiBoDangBo = trimmedNew;
+  });
+  saveAll(applicants);
+  return list;
+}
+
+// ---- Xóa chi bộ ----
+export function deleteChiBo(tenChiBo) {
+  const list = getChiBoList();
+  const idx = list.indexOf(tenChiBo);
+  if (idx === -1) throw new Error('Không tìm thấy chi bộ!');
+  list.splice(idx, 1);
+  saveChiBoList(list);
+  return list;
+}
+
+// =============================================
+// Quản lý Danh mục Bước Quy trình Mẫu
+// =============================================
+
+// ---- Lấy danh sách bước quy trình mẫu ----
+export function getProcessStepTemplates() {
+  if (typeof window === 'undefined') return DEFAULT_PROCESS_STEPS;
+  try {
+    const data = localStorage.getItem(PROCESS_STEPS_KEY);
+    if (data) return JSON.parse(data);
+    localStorage.setItem(PROCESS_STEPS_KEY, JSON.stringify(DEFAULT_PROCESS_STEPS));
+    return DEFAULT_PROCESS_STEPS;
+  } catch {
+    return DEFAULT_PROCESS_STEPS;
+  }
+}
+
+// ---- Lưu danh sách bước quy trình mẫu ----
+function saveProcessStepTemplates(steps) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(PROCESS_STEPS_KEY, JSON.stringify(steps));
+}
+
+// ---- Thêm bước quy trình mẫu ----
+export function addProcessStepTemplate(tenQuyTrinh) {
+  const steps = getProcessStepTemplates();
+  const trimmed = tenQuyTrinh.trim();
+  if (!trimmed) throw new Error('Tên bước quy trình không được để trống!');
+  const maxSoThuTu = steps.reduce((max, s) => Math.max(max, s.soThuTu), 0);
+  const newStep = { soThuTu: maxSoThuTu + 1, tenQuyTrinh: trimmed };
+  steps.push(newStep);
+  saveProcessStepTemplates(steps);
+  return steps;
+}
+
+// ---- Cập nhật tên bước quy trình mẫu ----
+export function updateProcessStepTemplate(soThuTu, tenQuyTrinh) {
+  const steps = getProcessStepTemplates();
+  const trimmed = tenQuyTrinh.trim();
+  if (!trimmed) throw new Error('Tên bước quy trình không được để trống!');
+  const step = steps.find(s => s.soThuTu === soThuTu);
+  if (!step) throw new Error('Không tìm thấy bước quy trình!');
+  step.tenQuyTrinh = trimmed;
+  saveProcessStepTemplates(steps);
+  return steps;
+}
+
+// ---- Xóa bước quy trình mẫu ----
+export function deleteProcessStepTemplate(soThuTu) {
+  const steps = getProcessStepTemplates();
+  const idx = steps.findIndex(s => s.soThuTu === soThuTu);
+  if (idx === -1) throw new Error('Không tìm thấy bước quy trình!');
+  steps.splice(idx, 1);
+  // Cập nhật lại số thứ tự
+  steps.forEach((s, i) => { s.soThuTu = i + 1; });
+  saveProcessStepTemplates(steps);
+  return steps;
+}
+
+// ---- Di chuyển thứ tự bước quy trình mẫu ----
+export function moveProcessStepTemplate(soThuTu, direction) {
+  const steps = getProcessStepTemplates();
+  const idx = steps.findIndex(s => s.soThuTu === soThuTu);
+  if (idx === -1) throw new Error('Không tìm thấy bước quy trình!');
+  const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (targetIdx < 0 || targetIdx >= steps.length) return steps;
+  [steps[idx], steps[targetIdx]] = [steps[targetIdx], steps[idx]];
+  steps.forEach((s, i) => { s.soThuTu = i + 1; });
+  saveProcessStepTemplates(steps);
+  return steps;
+}
+
+// ---- Cập nhật bước quy trình với ghi chú ----
+export function updateProcessStepWithNote(applicantId, soThuTu, trangThai, ghiChu = '') {
+  const applicants = getAllApplicants();
+  const applicant = applicants.find(a => a.id === applicantId);
+  if (!applicant) throw new Error('Không tìm thấy quần chúng!');
+
+  const step = applicant.quyTrinh.find(s => s.soThuTu === soThuTu);
+  if (!step) throw new Error('Không tìm thấy bước quy trình!');
+
+  step.trangThai = trangThai;
+  step.ngayCapNhat = new Date().toISOString().split('T')[0];
+  step.ghiChu = ghiChu;
+
+  saveAll(applicants);
+  return applicant;
 }
