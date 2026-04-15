@@ -70,12 +70,36 @@ export async function PUT(request) {
         return Response.json({ error: 'Không thể di chuyển' }, { status: 400 });
       }
 
-      // Swap soThuTu
-      const tmpNum = all[idx].soThuTu;
-      all[idx].soThuTu = all[swapIdx].soThuTu;
-      all[swapIdx].soThuTu = tmpNum;
+      const num1 = all[idx].soThuTu;
+      const num2 = all[swapIdx].soThuTu;
+
+      // Dùng số tạm để tránh lỗi Duplicate Key
+      all[idx].soThuTu = -1;
       await all[idx].save();
+
+      all[swapIdx].soThuTu = num1;
       await all[swapIdx].save();
+
+      all[idx].soThuTu = num2;
+      await all[idx].save();
+
+      // Đảo vị trí trong hồ sơ quần chúng (Applicant) -> cũng thông qua bước trung gian
+      await Applicant.updateMany(
+        { 'quyTrinh.soThuTu': num1 },
+        { $set: { 'quyTrinh.$.soThuTu': -1 } }
+      );
+      await Applicant.updateMany(
+        { 'quyTrinh.soThuTu': num2 },
+        { $set: { 'quyTrinh.$.soThuTu': num1 } }
+      );
+      await Applicant.updateMany(
+        { 'quyTrinh.soThuTu': -1 },
+        { $set: { 'quyTrinh.$.soThuTu': num2 } }
+      );
+      
+      // Sắp xếp lại mảng quyTrinh bên trong Applicant sau khi đổi số thứ tự
+      // (MongoDB aggregate update pipeline để sắp xếp cực kỳ phức tạp, ta có thể để FE/hàm getCurrentStep lo dựa trên soThuTu,
+      // hoặc lấy hết ra .sort rồi lưu lại. Ở đây vì dữ liệu ít, quy mô nhỏ, ta có thể để yên, các hàm tìm bước tiếp theo dùng find() là an toàn)
     }
 
     const templates = await ProcessTemplate.find({}).sort({ soThuTu: 1 }).lean();

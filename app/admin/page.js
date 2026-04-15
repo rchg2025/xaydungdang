@@ -597,7 +597,7 @@ export default function AdminPage() {
           />
         )}
         {activeTab === 'danhmuc' && userIsAdmin && (
-          <DanhMucTab onAlert={setAlert} onReload={loadData} />
+          <DanhMucTab onAlert={setAlert} onReload={loadData} onChiBoChanged={loadData} />
         )}
         {activeTab === 'users' && userIsAdmin && (
           <UserManagementTab onAlert={setAlert} currentUser={currentUser} />
