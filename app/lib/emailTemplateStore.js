@@ -43,7 +43,7 @@ const DEFAULT_TEMPLATES = {
     subject: 'Thông báo tiến trình Kết nạp Đảng - {{hoTen}}',
     body: `Kính gửi {{hoTen}},
 
-Hệ thống Quản lý Quy trình Kết nạp Đảng xin thông báo:
+Hệ thống tiếp nhận và xử lý hồ sơ Kết nạp Đảng xin thông báo:
 
 Hồ sơ của bạn tại {{chiBo}} đang được xử lý.
 - Bước hiện tại: {{buocHienTai}}/{{tongBuoc}}
@@ -88,16 +88,16 @@ Trân trọng,
     subject: 'Thông báo từ Hệ thống Kết nạp Đảng',
     body: `Kính gửi {{hoTen}},
 
-Đây là thông báo từ Hệ thống Quản lý Quy trình Kết nạp Đảng.
+Đây là thông báo từ Hệ thống tiếp nhận và xử lý hồ sơ Kết nạp Đảng.
 
 Trân trọng,
 {{nguoiGui}}`,
   },
   cap_nhat_buoc: {
     subject: '[Cập nhật Hồ sơ] {{hoTen}} - Bước {{buocHienTai}}: {{tenBuoc}}',
-    body: `Kính gửi Ban Lãnh đạo {{chiBo}},
+    body: `Kính gửi {{chiBo}},
 
-Hệ thống Quản lý Quy trình Kết nạp Đảng xin thông báo:
+Hệ thống tiếp nhận và xử lý hồ sơ Kết nạp Đảng xin thông báo:
 
 Hồ sơ quần chúng vừa được cập nhật trạng thái:
 
@@ -112,7 +112,7 @@ Hồ sơ quần chúng vừa được cập nhật trạng thái:
 Vui lòng kiểm tra hệ thống để biết thêm chi tiết.
 
 Trân trọng,
-Hệ thống Quản lý Kết nạp Đảng`,
+Hệ thống tiếp nhận và xử lý hồ sơ xin kết nạp Đảng`,
   },
 };
 

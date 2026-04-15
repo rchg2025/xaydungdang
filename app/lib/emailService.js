@@ -79,14 +79,14 @@ export async function testEmailConnection(testEmail) {
       subject: '✅ Test kết nối Gmail - Hệ thống Kết nạp Đảng',
       message: `Xin chào,
 
-Đây là email test kết nối từ Hệ thống Quản lý Quy trình Kết nạp Đảng.
+Đây là email test kết nối từ Hệ thống tiếp nhận và xử lý hồ sơ Kết nạp Đảng.
 
 Nếu bạn nhận được email này, cấu hình Gmail đã hoạt động thành công! ✅
 
 Thời gian gửi: ${new Date().toLocaleString('vi-VN')}
 
 Trân trọng,
-Hệ thống Kết nạp Đảng`,
+Hệ thống tiếp nhận và xử lý hồ sơ xin kết nạp Đảng`,
     }),
   });
 
