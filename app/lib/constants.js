@@ -22,7 +22,7 @@ export const STATUS_LABELS = {
   chua_bat_dau: 'Chưa bắt đầu',
   da_gui: 'Đã gửi',
   dang_xu_ly: 'Đang xử lý',
-  da_nhan_phan_hoi: 'Đã nhận phản hồi',
+  da_nhan_phan_hoi: 'Đã xong',
   huy_ho_so: 'Hủy hồ sơ',
 };
 

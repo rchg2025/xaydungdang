@@ -319,6 +319,8 @@ input, select, textarea, button {
 }
 
 .search-field {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -2132,6 +2134,7 @@ input, select, textarea, button {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .search-input-icon {
@@ -2143,6 +2146,7 @@ input, select, textarea, button {
 }
 
 .search-input-wrap input {
+  width: 100%;
   padding-left: 42px !important;
   padding-right: 40px !important;
 }
@@ -2723,4 +2727,43 @@ input, select, textarea, button {
 select,
 .form-select {
   color-scheme: dark;
+}
+
+
+/* =============================================
+   FIX: Search input fields full width
+   ============================================= */
+
+.search-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.search-input-wrap input {
+  width: 100% !important;
+  min-width: 0;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.search-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+  .search-fields { grid-template-columns: 1fr; }
 }
