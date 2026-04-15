@@ -48,6 +48,11 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [chiBoList, setChiBoList] = useState([]);
 
+  // Pagination
+  const PAGE_SIZE = 10;
+  const [dashPage, setDashPage] = useState(1);
+  const [applicantPage, setApplicantPage] = useState(1);
+
   // Modal states
   const [showApplicantModal, setShowApplicantModal] = useState(false);
   const [showProcessModal, setShowProcessModal] = useState(false);
@@ -243,14 +248,31 @@ export default function AdminPage() {
     setImportErrors([]);
   };
 
-  // ---- Filter applicants ----
-  const filteredApplicants = applicants.filter(a => {
+  // ---- Sort newest first ----
+  const sortedApplicants = [...applicants].sort(
+    (a, b) => new Date(b.ngayTao) - new Date(a.ngayTao)
+  );
+
+  // ---- Filter applicants (Quần chúng tab) ----
+  const filteredApplicants = sortedApplicants.filter(a => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
     return a.hoTen.toLowerCase().includes(term) ||
            a.cccd.includes(term) ||
            a.chiBoDangBo.toLowerCase().includes(term);
   });
+
+  // ---- Pagination helpers ----
+  const paginate = (list, page) => list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = (list) => Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+
+  // Dashboard
+  const dashTotalPages = totalPages(sortedApplicants);
+  const dashPageItems = paginate(sortedApplicants, dashPage);
+
+  // Applicants tab
+  const applicantTotalPages = totalPages(filteredApplicants);
+  const applicantPageItems = paginate(filteredApplicants, applicantPage);
 
   // ---- LOGIN SCREEN ----
   if (!currentUserState) {
@@ -463,10 +485,15 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Recent applicants */}
-            <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 700, marginBottom: '1rem' }}>
-              Hồ sơ gần đây
-            </h3>
+            {/* Recent applicants — sorted newest first, paginated */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+              <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 700, margin: 0 }}>
+                Hồ sơ gần đây
+              </h3>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                Tổng {sortedApplicants.length} hồ sơ &nbsp;·&nbsp; Trang {dashPage}/{dashTotalPages}
+              </span>
+            </div>
             <div className="data-table-wrapper">
               <table className="data-table">
                 <thead>
@@ -480,12 +507,12 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {applicants.slice(0, 5).map((a, i) => {
+                  {dashPageItems.map((a, i) => {
                     const step = getCurrentStep(a);
                     const isCancelled = step === -1;
                     return (
                       <tr key={a.id}>
-                        <td>{i + 1}</td>
+                        <td>{(dashPage - 1) * PAGE_SIZE + i + 1}</td>
                         <td style={{ fontWeight: 600 }}>{a.hoTen}</td>
                         <td>{a.cccd}</td>
                         <td style={{ fontSize: 'var(--text-xs)' }}>{a.chiBoDangBo}</td>
@@ -507,6 +534,27 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+            {dashTotalPages > 1 && (
+              <div className="pagination">
+                <button
+                  className="page-btn"
+                  onClick={() => setDashPage(p => Math.max(1, p - 1))}
+                  disabled={dashPage === 1}
+                >← Trước</button>
+                {Array.from({ length: dashTotalPages }, (_, i) => i + 1).map(p => (
+                  <button
+                    key={p}
+                    className={`page-btn ${dashPage === p ? 'active' : ''}`}
+                    onClick={() => setDashPage(p)}
+                  >{p}</button>
+                ))}
+                <button
+                  className="page-btn"
+                  onClick={() => setDashPage(p => Math.min(dashTotalPages, p + 1))}
+                  disabled={dashPage === dashTotalPages}
+                >Tiếp →</button>
+              </div>
+            )}
           </>
         )}
 
@@ -520,7 +568,7 @@ export default function AdminPage() {
                   type="text"
                   placeholder="Tìm kiếm theo tên, CCCD, chi bộ..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => { setSearchTerm(e.target.value); setApplicantPage(1); }}
                 />
               </div>
               <div className="toolbar-actions">
@@ -550,6 +598,10 @@ export default function AdminPage() {
                 <p>Bấm &quot;Thêm quần chúng&quot; để bắt đầu nhập dữ liệu</p>
               </div>
             ) : (
+              <>
+                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
+                  Hiển thị {(applicantPage - 1) * PAGE_SIZE + 1}–{Math.min(applicantPage * PAGE_SIZE, filteredApplicants.length)} / {filteredApplicants.length} hồ sơ
+                </div>
               <div className="data-table-wrapper">
                 <table className="data-table">
                   <thead>
@@ -564,9 +616,9 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredApplicants.map((a, i) => (
+                    {applicantPageItems.map((a, i) => (
                       <tr key={a.id}>
-                        <td>{i + 1}</td>
+                        <td>{(applicantPage - 1) * PAGE_SIZE + i + 1}</td>
                         <td style={{ fontWeight: 600 }}>{a.hoTen}</td>
                         <td>{a.cccd}</td>
                         <td style={{ fontSize: 'var(--text-xs)' }}>
@@ -596,6 +648,28 @@ export default function AdminPage() {
                   </tbody>
                 </table>
               </div>
+              {applicantTotalPages > 1 && (
+                <div className="pagination">
+                  <button
+                    className="page-btn"
+                    onClick={() => setApplicantPage(p => Math.max(1, p - 1))}
+                    disabled={applicantPage === 1}
+                  >← Trước</button>
+                  {Array.from({ length: applicantTotalPages }, (_, i) => i + 1).map(p => (
+                    <button
+                      key={p}
+                      className={`page-btn ${applicantPage === p ? 'active' : ''}`}
+                      onClick={() => setApplicantPage(p)}
+                    >{p}</button>
+                  ))}
+                  <button
+                    className="page-btn"
+                    onClick={() => setApplicantPage(p => Math.min(applicantTotalPages, p + 1))}
+                    disabled={applicantPage === applicantTotalPages}
+                  >Tiếp →</button>
+                </div>
+              )}
+            </>
             )}
           </>
         )}
