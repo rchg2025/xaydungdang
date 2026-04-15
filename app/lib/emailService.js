@@ -3,8 +3,7 @@
 // =============================================
 
 import { processTemplate, TEMPLATE_TYPES } from './emailTemplateStore';
-import { getChiBoList } from './store';
-import { STATUS_LABELS } from './constants';
+import { fetchChiBoList } from './apiClient';
 
 // =============================================
 // SEND EMAIL qua API Route /api/send-email
@@ -40,8 +39,8 @@ export async function sendEmail(templateType, recipientEmail, data = {}) {
 // GỬI THÔNG BÁO CẬP NHẬT BƯỚC → EMAIL CHI BỘ
 // =============================================
 export async function sendChiBoStatusNotification(applicant, step, trangThaiLabel, nguoiGui = '') {
-  // Tìm chi bộ trong danh mục
-  const chiBoList = getChiBoList();
+  // Tìm chi bộ trong danh mục (qua API)
+  const chiBoList = await fetchChiBoList();
   const chiBoObj = chiBoList.find((cb) => cb.ten === applicant.chiBoDangBo);
 
   const emailChiBo = chiBoObj?.email?.trim();

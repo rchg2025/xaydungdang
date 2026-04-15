@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProcessTimeline from './components/ProcessTimeline';
-import { searchApplicants, initializeData, getCurrentStep, getStatistics } from './lib/store';
+import { searchApplicantsAPI, fetchStats, getCurrentStep } from './lib/apiClient';
 
 export default function HomePage() {
   const [cccd, setCccd] = useState('');
@@ -15,21 +15,23 @@ export default function HomePage() {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    initializeData();
-    setStats(getStatistics());
+    fetchStats().then(setStats).catch(console.error);
   }, []);
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
     if (!cccd.trim() && !chiBo.trim()) return;
     setIsSearching(true);
-    setTimeout(() => {
-      const found = searchApplicants(cccd, chiBo);
+    try {
+      const found = await searchApplicantsAPI(cccd, chiBo);
       setResults(found);
       setSearched(true);
       setExpandedId(found.length === 1 ? found[0].id : null);
+    } catch (err) {
+      console.error(err);
+    } finally {
       setIsSearching(false);
-    }, 400);
+    }
   };
 
   const handleReset = () => {

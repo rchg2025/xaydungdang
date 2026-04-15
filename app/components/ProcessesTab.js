@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { updateProcessStep, getAllApplicants, getCurrentStep } from '../lib/store';
+import { updateProcessStepAPI, getCurrentStep } from '../lib/apiClient';
 import { STATUS_LABELS, STATUSES } from '../lib/constants';
 import ProcessTimeline from './ProcessTimeline';
 
@@ -21,12 +21,12 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
     return a.hoTen.toLowerCase().includes(t) || a.cccd.includes(t);
   });
 
-  const handleUpdateStep = (applicantId, soThuTu, trangThai, lyDo = '') => {
+  const handleUpdateStep = async (applicantId, soThuTu, trangThai, lyDo = '') => {
     try {
       const ghiChu = trangThai === STATUSES.HUY_HO_SO && lyDo.trim()
         ? `Lý do từ chối: ${lyDo.trim()}`
         : lyDo.trim();
-      updateProcessStep(applicantId, soThuTu, trangThai, ghiChu, currentUser?.hoTen || '');
+      await updateProcessStepAPI(applicantId, soThuTu, trangThai, ghiChu, currentUser?.hoTen || '');
       onReload();
       onAlert({ type: 'success', message: `Đã cập nhật bước ${soThuTu}!` });
       setEditingStep(null);

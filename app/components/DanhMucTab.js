@@ -2,17 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  getChiBoList,
-  addChiBo,
-  updateChiBo,
-  deleteChiBo,
-  getProcessStepTemplates,
-  addProcessStepTemplate,
-  updateProcessStepTemplate,
-  deleteProcessStepTemplate,
-  moveProcessStepTemplate,
-  syncAllApplicantsWithTemplate,
-} from '../lib/store';
+  fetchChiBoList,
+  createChiBo,
+  updateChiBoAPI,
+  deleteChiBoAPI,
+  fetchProcessTemplates,
+  createProcessTemplate,
+  renameProcessTemplate,
+  deleteProcessTemplate,
+  moveProcessTemplate,
+} from '../lib/apiClient';
 
 // =============================================
 // Danh Mục Tab Component
@@ -37,12 +36,16 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
   const [stepSearch, setStepSearch] = useState('');
 
   // ---- Load data ----
-  const loadSteps = useCallback(() => {
-    setSteps(getProcessStepTemplates());
+  const loadSteps = useCallback(async () => {
+    try {
+      setSteps(await fetchProcessTemplates());
+    } catch (err) { console.error(err); }
   }, []);
 
-  const loadChiBo = useCallback(() => {
-    setChiBoList(getChiBoList());
+  const loadChiBo = useCallback(async () => {
+    try {
+      setChiBoList(await fetchChiBoList());
+    } catch (err) { console.error(err); }
   }, []);
 
   useEffect(() => {
@@ -53,10 +56,10 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
   // =============================================
   // QUY TRÌNH HANDLERS
   // =============================================
-  const handleAddStep = (e) => {
+  const handleAddStep = async (e) => {
     e.preventDefault();
     try {
-      const updated = addProcessStepTemplate(newStepName);
+      const updated = await createProcessTemplate(newStepName);
       setSteps(updated);
       setNewStepName('');
       onAlert({ type: 'success', message: 'Đã thêm bước quy trình và đồng bộ tất cả hồ sơ!' });
@@ -71,10 +74,10 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
     setEditStepName(step.tenQuyTrinh);
   };
 
-  const handleSaveStep = (e) => {
+  const handleSaveStep = async (e) => {
     e.preventDefault();
     try {
-      const updated = updateProcessStepTemplate(editingStep.soThuTu, editStepName);
+      const updated = await renameProcessTemplate(editingStep.soThuTu, editStepName);
       setSteps(updated);
       setEditingStep(null);
       onAlert({ type: 'success', message: 'Đã cập nhật tên bước và đồng bộ tất cả hồ sơ!' });
@@ -84,9 +87,9 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
     }
   };
 
-  const handleDeleteStep = (soThuTu) => {
+  const handleDeleteStep = async (soThuTu) => {
     try {
-      const updated = deleteProcessStepTemplate(soThuTu);
+      const updated = await deleteProcessTemplate(soThuTu);
       setSteps(updated);
       setDeletingStep(null);
       onAlert({ type: 'success', message: 'Đã xóa bước và đồng bộ tất cả hồ sơ!' });
@@ -96,9 +99,9 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
     }
   };
 
-  const handleMoveStep = (soThuTu, direction) => {
+  const handleMoveStep = async (soThuTu, direction) => {
     try {
-      const updated = moveProcessStepTemplate(soThuTu, direction);
+      const updated = await moveProcessTemplate(soThuTu, direction);
       setSteps(updated);
       if (onReload) onReload();
     } catch (err) {
@@ -109,11 +112,11 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
   // =============================================
   // CHI BỘ HANDLERS
   // =============================================
-  const handleAddChiBo = (e) => {
+  const handleAddChiBo = async (e) => {
     e.preventDefault();
     try {
-      const updated = addChiBo(newChiBo);
-      setChiBoList(updated);
+      await createChiBo(newChiBo);
+      setChiBoList(await fetchChiBoList());
       setNewChiBo({ ten: '', biThu: '', chanhVanPhong: '', soDienThoai: '', email: '' });
       onAlert({ type: 'success', message: 'Đã thêm chi bộ/đảng bộ mới!' });
       if (onChiBoChanged) onChiBoChanged();
@@ -127,11 +130,11 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
     setEditChiBo({ ten: cb.ten, biThu: cb.biThu || '', chanhVanPhong: cb.chanhVanPhong || '', soDienThoai: cb.soDienThoai || '', email: cb.email || '' });
   };
 
-  const handleSaveChiBo = (e) => {
+  const handleSaveChiBo = async (e) => {
     e.preventDefault();
     try {
-      const updated = updateChiBo(editingChiBo.ten, editChiBo);
-      setChiBoList(updated);
+      await updateChiBoAPI(editingChiBo.ten, editChiBo);
+      setChiBoList(await fetchChiBoList());
       setEditingChiBo(null);
       onAlert({ type: 'success', message: 'Đã cập nhật chi bộ/đảng bộ!' });
       if (onChiBoChanged) onChiBoChanged();
@@ -140,10 +143,10 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
     }
   };
 
-  const handleDeleteChiBo = (tenChiBo) => {
+  const handleDeleteChiBo = async (tenChiBo) => {
     try {
-      const updated = deleteChiBo(tenChiBo);
-      setChiBoList(updated);
+      await deleteChiBoAPI(tenChiBo);
+      setChiBoList(await fetchChiBoList());
       setDeletingChiBo(null);
       onAlert({ type: 'success', message: 'Đã xóa chi bộ/đảng bộ!' });
       if (onChiBoChanged) onChiBoChanged();

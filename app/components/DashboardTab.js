@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { getCurrentStep } from '../lib/store';
+import { getCurrentStep } from '../lib/apiClient';
 import ProcessTimeline from './ProcessTimeline';
 
 const PAGE_SIZE = 10;

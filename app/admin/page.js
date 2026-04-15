@@ -3,23 +3,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
-  getAllApplicants,
-  getStatistics,
-  initializeData,
-  getChiBoList,
-  syncAllApplicantsWithTemplate,
-} from '../lib/store';
-import {
-  login,
-  logout,
+  fetchApplicants,
+  fetchStats,
+  fetchChiBoList,
+  fetchUsers,
+  loginAPI,
+  updateUserAPI,
   getCurrentUser,
-  isAdmin,
-  initializeUsers,
-  getAdminEmail,
-  findUserByEmail,
-  resetPasswordByEmail,
+  setCurrentUser as saveSession,
+  logout as logoutSession,
+  SUPERADMIN_USERNAME,
+  ROLES,
   ROLE_LABELS,
-} from '../lib/userStore';
+} from '../lib/apiClient';
 
 // Tab components
 import DashboardTab from '../components/DashboardTab';
@@ -60,18 +56,24 @@ export default function AdminPage() {
 
   // ---- Init ----
   useEffect(() => {
-    initializeData();
-    initializeUsers();
-    syncAllApplicantsWithTemplate(); // đồng bộ hồ sơ cũ với template hiện tại
     const user = getCurrentUser();
     if (user) setCurrentUser(user);
   }, []);
 
   // ---- Load data ----
-  const loadData = useCallback(() => {
-    setApplicants(getAllApplicants());
-    setStats(getStatistics());
-    setChiBoList(getChiBoList());
+  const loadData = useCallback(async () => {
+    try {
+      const [apps, st, cb] = await Promise.all([
+        fetchApplicants(),
+        fetchStats(),
+        fetchChiBoList(),
+      ]);
+      setApplicants(apps);
+      setStats(st);
+      setChiBoList(cb);
+    } catch (err) {
+      console.error('Load data error:', err);
+    }
   }, []);
 
   useEffect(() => {
@@ -86,22 +88,23 @@ export default function AdminPage() {
     }
   }, [alert]);
 
-  const userIsAdmin = isAdmin(currentUser);
+  const userIsAdmin = currentUser?.role === 'admin';
 
   // ---- Auth ----
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const user = login(usernameInput, passwordInput);
-    if (user) {
+    setLoginError('');
+    try {
+      const user = await loginAPI(usernameInput, passwordInput);
+      saveSession(user);
       setCurrentUser(user);
-      setLoginError('');
-    } else {
-      setLoginError('Tên đăng nhập hoặc mật khẩu không đúng, hoặc tài khoản đã bị vô hiệu!');
+    } catch (err) {
+      setLoginError(err.message || 'Tên đăng nhập hoặc mật khẩu không đúng!');
     }
   };
 
   const handleLogout = () => {
-    logout();
+    logoutSession();
     setCurrentUser(null);
     setUsernameInput('');
     setPasswordInput('');
@@ -145,11 +148,14 @@ export default function AdminPage() {
     setFpSuccess('');
 
     // Kiểm tra email tồn tại trong hệ thống
-    const userFound = findUserByEmail(fpEmail);
-    if (!userFound) {
-      setFpError('Không tìm thấy tài khoản nào liên kết với email này!');
-      return;
-    }
+    try {
+      const allUsers = await fetchUsers();
+      const userFound = allUsers.find(u => u.email === fpEmail);
+      if (!userFound) {
+        setFpError('Không tìm thấy tài khoản nào liên kết với email này!');
+        return;
+      }
+    } catch { setFpError('Lỗi kiểm tra email'); return; }
 
     setFpLoading(true);
     try {
@@ -241,8 +247,12 @@ export default function AdminPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Lỗi đặt lại mật khẩu');
 
-      // Cập nhật mật khẩu trong localStorage
-      resetPasswordByEmail(fpEmail, fpNewPwd);
+      // Cập nhật mật khẩu qua API
+      const allUsers = await fetchUsers();
+      const targetUser = allUsers.find(u => u.email === fpEmail);
+      if (targetUser) {
+        await updateUserAPI(targetUser.id, { password: fpNewPwd });
+      }
 
       setFpSuccess('🎉 Đặt lại mật khẩu thành công! Đang chuyển về trang đăng nhập...');
       setTimeout(() => {

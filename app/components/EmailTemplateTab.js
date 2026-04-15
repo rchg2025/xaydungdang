@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import {
+  fetchEmailTemplates,
+  saveEmailTemplate,
+  resetEmailTemplate,
+} from '../lib/apiClient';
+import {
   TEMPLATE_TYPES,
   TEMPLATE_LABELS,
   TEMPLATE_VARIABLES,
-  getTemplate,
-  saveTemplate,
-  resetTemplate,
   processTemplate,
 } from '../lib/emailTemplateStore';
 import { testEmailConnection } from '../lib/emailService';
@@ -27,16 +29,23 @@ export default function EmailTemplateTab({ onAlert }) {
 
   // ---- Load template ----
   useEffect(() => {
-    const tpl = getTemplate(activeType);
-    setSubject(tpl.subject);
-    setBody(tpl.body);
-    setHasChanges(false);
+    (async () => {
+      try {
+        const templates = await fetchEmailTemplates();
+        const tpl = templates[activeType];
+        if (tpl) {
+          setSubject(tpl.subject);
+          setBody(tpl.body);
+        }
+        setHasChanges(false);
+      } catch (err) { console.error(err); }
+    })();
   }, [activeType]);
 
   // ---- Save template ----
-  const handleSave = () => {
+  const handleSave = async () => {
     try {
-      saveTemplate(activeType, { subject, body });
+      await saveEmailTemplate(activeType, subject, body);
       setHasChanges(false);
       onAlert({ type: 'success', message: 'Đã lưu template email!' });
     } catch (err) {
@@ -45,13 +54,16 @@ export default function EmailTemplateTab({ onAlert }) {
   };
 
   // ---- Reset template ----
-  const handleReset = () => {
-    resetTemplate(activeType);
-    const tpl = getTemplate(activeType);
-    setSubject(tpl.subject);
-    setBody(tpl.body);
-    setHasChanges(false);
-    onAlert({ type: 'success', message: 'Đã khôi phục template mặc định!' });
+  const handleReset = async () => {
+    try {
+      const tpl = await resetEmailTemplate(activeType);
+      setSubject(tpl.subject);
+      setBody(tpl.body);
+      setHasChanges(false);
+      onAlert({ type: 'success', message: 'Đã khôi phục template mặc định!' });
+    } catch (err) {
+      onAlert({ type: 'error', message: err.message });
+    }
   };
 
   // ---- Test send ----

@@ -2,15 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  getAllUsers,
-  addUser,
-  updateUser,
-  deleteUser,
-  resetPassword,
+  fetchUsers,
+  createUser,
+  updateUserAPI,
+  deleteUserAPI,
   ROLES,
   ROLE_LABELS,
   SUPERADMIN_USERNAME,
-} from '../lib/userStore';
+} from '../lib/apiClient';
 
 // =============================================
 // User Management Tab Component (Admin only)
@@ -30,8 +29,10 @@ export default function UserManagementTab({ onAlert, currentUser }) {
   const [resetPwd, setResetPwd] = useState('');
 
   // ---- Load ----
-  const loadUsers = useCallback(() => {
-    setUsers(getAllUsers());
+  const loadUsers = useCallback(async () => {
+    try {
+      setUsers(await fetchUsers());
+    } catch (err) { console.error(err); }
   }, []);
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
@@ -39,7 +40,7 @@ export default function UserManagementTab({ onAlert, currentUser }) {
   // Ẩn superadmin khỏi danh sách — trừ khi chính tài khoản qtv đang đăng nhập
   const visibleUsers = users
     .filter((u) => u.username !== SUPERADMIN_USERNAME || currentUser?.username === SUPERADMIN_USERNAME)
-    .sort((a, b) => new Date(b.ngayTao) - new Date(a.ngayTao)); // Mới nhất lên đầu
+    .sort((a, b) => new Date(b.ngayTao) - new Date(a.ngayTao));
 
   // ---- Filtered ----
   const filtered = visibleUsers.filter(u => {
@@ -51,11 +52,11 @@ export default function UserManagementTab({ onAlert, currentUser }) {
   });
 
   // ---- Handlers ----
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
     try {
-      addUser(formData);
-      loadUsers();
+      await createUser(formData);
+      await loadUsers();
       setShowAddModal(false);
       setFormData({ username: '', hoTen: '', email: '', role: ROLES.BIEN_TAP_VIEN, password: '' });
       onAlert({ type: 'success', message: 'Đã thêm thành viên mới!' });
@@ -64,16 +65,15 @@ export default function UserManagementTab({ onAlert, currentUser }) {
     }
   };
 
-  const handleEdit = (e) => {
+  const handleEdit = async (e) => {
     e.preventDefault();
     try {
-      updateUser(editingUser.id, {
+      await updateUserAPI(editingUser.id, {
         hoTen: formData.hoTen,
         email: formData.email,
         role: formData.role,
-        // username không cập nhật vì field đã bị khóa
       });
-      loadUsers();
+      await loadUsers();
       setEditingUser(null);
       onAlert({ type: 'success', message: 'Đã cập nhật thành viên!' });
     } catch (err) {
@@ -81,10 +81,10 @@ export default function UserManagementTab({ onAlert, currentUser }) {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     try {
-      deleteUser(deletingUser.id);
-      loadUsers();
+      await deleteUserAPI(deletingUser.id);
+      await loadUsers();
       setDeletingUser(null);
       onAlert({ type: 'success', message: 'Đã xóa thành viên!' });
     } catch (err) {
@@ -92,10 +92,10 @@ export default function UserManagementTab({ onAlert, currentUser }) {
     }
   };
 
-  const handleReset = (e) => {
+  const handleReset = async (e) => {
     e.preventDefault();
     try {
-      resetPassword(resetUser.id, resetPwd);
+      await updateUserAPI(resetUser.id, { password: resetPwd });
       setResetUser(null);
       setResetPwd('');
       onAlert({ type: 'success', message: 'Đã đặt lại mật khẩu!' });

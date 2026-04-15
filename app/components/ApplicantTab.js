@@ -2,13 +2,13 @@
 
 import { useState, useCallback } from 'react';
 import {
-  addApplicant,
-  updateApplicant,
-  deleteApplicant,
-  updateProcessStep,
-  getAllApplicants,
+  createApplicant,
+  updateApplicantAPI,
+  deleteApplicantAPI,
+  updateProcessStepAPI,
+  fetchApplicants,
   getCurrentStep,
-} from '../lib/store';
+} from '../lib/apiClient';
 import { STATUS_LABELS, STATUSES } from '../lib/constants';
 import { exportApplicantsToXlsx, exportImportTemplate, parseXlsxFile } from '../lib/excelUtils';
 import { sendChiBoStatusNotification } from '../lib/emailService';
@@ -140,14 +140,14 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
     setShowApplicantModal(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     try {
       if (editingApplicant) {
-        updateApplicant(editingApplicant.id, formData);
+        await updateApplicantAPI(editingApplicant.id, formData);
         onAlert({ type: 'success', message: 'Cập nhật thông tin thành công!' });
       } else {
-        addApplicant(formData);
+        await createApplicant(formData);
         onAlert({ type: 'success', message: 'Thêm quần chúng mới thành công!' });
       }
       setShowApplicantModal(false);
@@ -157,8 +157,8 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
     }
   };
 
-  const handleDelete = (id) => {
-    deleteApplicant(id);
+  const handleDelete = async (id) => {
+    await deleteApplicantAPI(id);
     setShowDeleteConfirm(null);
     onReload();
     onAlert({ type: 'success', message: 'Đã xóa hồ sơ thành công!' });
@@ -169,8 +169,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
 
   const handleUpdateStep = async (soThuTu, trangThai) => {
     try {
-      updateProcessStep(selectedApplicant.id, soThuTu, trangThai, '', currentUser?.hoTen || '');
-      const updated = getAllApplicants().find(a => a.id === selectedApplicant.id);
+      const updated = await updateProcessStepAPI(selectedApplicant.id, soThuTu, trangThai, '', currentUser?.hoTen || '');
       setSelectedApplicant(updated);
       onReload();
       onAlert({ type: 'success', message: `Cập nhật bước ${soThuTu} thành công!` });
@@ -228,13 +227,13 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
     setImportLoading(false);
   };
 
-  const handleImportConfirm = () => {
+  const handleImportConfirm = async () => {
     let success = 0;
     const failed = [];
-    importPreview.forEach(row => {
-      try { addApplicant(row); success++; }
+    for (const row of importPreview) {
+      try { await createApplicant(row); success++; }
       catch (err) { failed.push(`${row.hoTen}: ${err.message}`); }
-    });
+    }
     onReload();
     setShowImportModal(false);
     setImportFile(null); setImportPreview([]); setImportErrors([]);
