@@ -1822,3 +1822,303 @@ input, select, textarea, button {
     padding: 7px 12px;
   }
 }
+
+/* =============================================
+   USER MANAGEMENT & AUTH STYLES
+   ============================================= */
+
+/* ---- User Avatar ---- */
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.user-avatar-admin {
+  background: linear-gradient(135deg, #c41e3a, #ff6b6b);
+}
+
+.user-avatar-bien_tap_vien {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+/* ---- Role Badges ---- */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.role-admin {
+  background: rgba(196, 30, 58, 0.12);
+  color: #e63950;
+  border: 1px solid rgba(196, 30, 58, 0.2);
+}
+
+.role-bien_tap_vien {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.role-badge-sm {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+}
+
+.role-badge-sm.role-admin {
+  background: rgba(196, 30, 58, 0.15);
+  color: #e63950;
+}
+
+.role-badge-sm.role-bien_tap_vien {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+/* ---- User Session Badge (Header) ---- */
+.user-session-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  margin-left: 12px;
+}
+
+.user-session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.user-session-name {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+/* ---- Forgot Password ---- */
+.forgot-pwd-link {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color var(--transition-fast);
+}
+
+.link-btn:hover {
+  color: var(--color-accent);
+}
+
+.forgot-pwd-panel {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.forgot-pwd-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.forgot-pwd-panel h3 {
+  font-size: var(--text-lg);
+  margin-bottom: 0.5rem;
+}
+
+.forgot-pwd-panel p {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.forgot-pwd-contact {
+  background: var(--color-surface-active);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+.forgot-pwd-contact a {
+  color: var(--color-accent);
+}
+
+/* ---- Process Step Audit Info ---- */
+.process-step-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.process-step-audit {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.timeline-updater {
+  color: var(--color-text-muted);
+}
+
+/* ---- Email Template Styles ---- */
+.email-config-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.email-type-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.email-type-btn {
+  padding: 8px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.email-type-btn:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+}
+
+.email-type-btn.active {
+  background: rgba(196, 30, 58, 0.12);
+  border-color: rgba(196, 30, 58, 0.4);
+  color: var(--color-text-primary);
+}
+
+.email-vars {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+  padding: 10px 14px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.email-vars-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.email-var-chip {
+  padding: 3px 10px;
+  background: var(--color-surface-active);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--color-accent);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.email-var-chip:hover {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: var(--color-accent);
+}
+
+.email-body-editor {
+  font-family: 'Inter', monospace;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 200px;
+}
+
+/* ---- Email Preview ---- */
+.email-preview {
+  margin-top: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  animation: fadeInUp 0.2s ease;
+}
+
+.email-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--color-surface-active);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.email-preview-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.email-preview-subject {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  background: var(--color-bg-secondary);
+}
+
+.email-preview-body {
+  padding: 16px;
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+  background: var(--color-surface);
+}
+
+@media (max-width: 768px) {
+  .email-config-grid {
+    grid-template-columns: 1fr;
+  }
+  .user-session-badge {
+    display: none;
+  }
+  .email-type-tabs {
+    flex-direction: column;
+  }
+}

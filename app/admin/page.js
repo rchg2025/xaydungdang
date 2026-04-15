@@ -14,33 +14,39 @@ import {
   getChiBoList,
 } from '../lib/store';
 import {
-  ADMIN_CREDENTIALS,
   STATUS_LABELS,
   STATUSES,
 } from '../lib/constants';
+import {
+  login,
+  logout,
+  getCurrentUser,
+  isAdmin,
+  initializeUsers,
+  getAdminEmail,
+  ROLE_LABELS,
+} from '../lib/userStore';
+import { exportApplicantsToXlsx, exportImportTemplate, parseXlsxFile } from '../lib/excelUtils';
 import ProcessTimeline from '../components/ProcessTimeline';
 import DanhMucTab from '../components/DanhMucTab';
-import { exportApplicantsToXlsx, exportImportTemplate, parseXlsxFile } from '../lib/excelUtils';
+import UserManagementTab from '../components/UserManagementTab';
+import EmailTemplateTab from '../components/EmailTemplateTab';
 
 // =============================================
 // Admin Page Component
 // =============================================
 export default function AdminPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [currentUserState, setCurrentUserState] = useState(null);
+  const [usernameInput, setUsernameInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [showForgotPwd, setShowForgotPwd] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [applicants, setApplicants] = useState([]);
   const [stats, setStats] = useState(null);
   const [alert, setAlert] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [chiBoList, setChiBoList] = useState([]);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importFile, setImportFile] = useState(null);
-  const [importPreview, setImportPreview] = useState([]);
-  const [importErrors, setImportErrors] = useState([]);
-  const [importLoading, setImportLoading] = useState(false);
 
   // Modal states
   const [showApplicantModal, setShowApplicantModal] = useState(false);
@@ -48,6 +54,13 @@ export default function AdminPage() {
   const [editingApplicant, setEditingApplicant] = useState(null);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+
+  // Import states
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importPreview, setImportPreview] = useState([]);
+  const [importErrors, setImportErrors] = useState([]);
+  const [importLoading, setImportLoading] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -57,10 +70,9 @@ export default function AdminPage() {
   // ---- Init ----
   useEffect(() => {
     initializeData();
-    const savedAuth = sessionStorage.getItem('xaydungdang_auth');
-    if (savedAuth === 'true') {
-      setIsLoggedIn(true);
-    }
+    initializeUsers();
+    const user = getCurrentUser();
+    if (user) setCurrentUserState(user);
   }, []);
 
   // ---- Load data when logged in ----
@@ -72,34 +84,38 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (isLoggedIn) loadData();
-  }, [isLoggedIn, loadData]);
+    if (currentUserState) loadData();
+  }, [currentUserState, loadData]);
 
   // ---- Auto-hide alerts ----
   useEffect(() => {
     if (alert) {
-      const timer = setTimeout(() => setAlert(null), 3000);
+      const timer = setTimeout(() => setAlert(null), 4000);
       return () => clearTimeout(timer);
     }
   }, [alert]);
 
+  // ---- Permission helpers ----
+  const userIsAdmin = isAdmin(currentUserState);
+
   // ---- Login ----
   const handleLogin = (e) => {
     e.preventDefault();
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      setIsLoggedIn(true);
+    const user = login(usernameInput, passwordInput);
+    if (user) {
+      setCurrentUserState(user);
       setLoginError('');
-      sessionStorage.setItem('xaydungdang_auth', 'true');
     } else {
-      setLoginError('Tên đăng nhập hoặc mật khẩu không đúng!');
+      setLoginError('Tên đăng nhập hoặc mật khẩu không đúng, hoặc tài khoản đã bị vô hiệu!');
     }
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    sessionStorage.removeItem('xaydungdang_auth');
-    setUsername('');
-    setPassword('');
+    logout();
+    setCurrentUserState(null);
+    setUsernameInput('');
+    setPasswordInput('');
+    setActiveTab('dashboard');
   };
 
   // ---- CRUD Applicants ----
@@ -154,7 +170,13 @@ export default function AdminPage() {
 
   const handleUpdateStep = (soThuTu, trangThai) => {
     try {
-      updateProcessStep(selectedApplicant.id, soThuTu, trangThai);
+      updateProcessStep(
+        selectedApplicant.id,
+        soThuTu,
+        trangThai,
+        '',
+        currentUserState ? currentUserState.hoTen : ''
+      );
       const updated = getAllApplicants().find(a => a.id === selectedApplicant.id);
       setSelectedApplicant(updated);
       loadData();
@@ -231,7 +253,8 @@ export default function AdminPage() {
   });
 
   // ---- LOGIN SCREEN ----
-  if (!isLoggedIn) {
+  if (!currentUserState) {
+    const adminEmail = getAdminEmail();
     return (
       <>
         <header className="header">
@@ -257,35 +280,64 @@ export default function AdminPage() {
               <div className="alert alert-error">⚠️ {loginError}</div>
             )}
 
-            <form onSubmit={handleLogin}>
-              <div className="form-group">
-                <label htmlFor="login-username">Tên đăng nhập</label>
-                <input
-                  id="login-username"
-                  type="text"
-                  className="form-input"
-                  placeholder="Nhập tên đăng nhập"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
+            {showForgotPwd ? (
+              <div className="forgot-pwd-panel">
+                <div className="forgot-pwd-icon">🔑</div>
+                <h3>Quên mật khẩu?</h3>
+                <p>Vui lòng liên hệ Quản trị viên để được đặt lại mật khẩu.</p>
+                {adminEmail && (
+                  <div className="forgot-pwd-contact">
+                    📧 Email: <a href={`mailto:${adminEmail}`}>{adminEmail}</a>
+                  </div>
+                )}
+                <button
+                  className="btn btn-secondary btn-block"
+                  onClick={() => setShowForgotPwd(false)}
+                  style={{ marginTop: '1rem' }}
+                >
+                  ← Quay lại đăng nhập
+                </button>
               </div>
-              <div className="form-group">
-                <label htmlFor="login-password">Mật khẩu</label>
-                <input
-                  id="login-password"
-                  type="password"
-                  className="form-input"
-                  placeholder="Nhập mật khẩu"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <button type="submit" className="btn btn-primary btn-block mt-2">
-                Đăng nhập
-              </button>
-            </form>
+            ) : (
+              <form onSubmit={handleLogin}>
+                <div className="form-group">
+                  <label htmlFor="login-username">Tên đăng nhập</label>
+                  <input
+                    id="login-username"
+                    type="text"
+                    className="form-input"
+                    placeholder="Nhập tên đăng nhập"
+                    value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="login-password">Mật khẩu</label>
+                  <input
+                    id="login-password"
+                    type="password"
+                    className="form-input"
+                    placeholder="Nhập mật khẩu"
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary btn-block mt-2">
+                  Đăng nhập
+                </button>
+                <div className="forgot-pwd-link">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPwd(true)}
+                    className="link-btn"
+                  >
+                    Quên mật khẩu?
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </>
@@ -304,7 +356,18 @@ export default function AdminPage() {
           <nav className="header-nav">
             <Link href="/" className="header-nav-link">🔍 Tra cứu</Link>
             <Link href="/admin" className="header-nav-link active">🔐 Quản trị</Link>
-            <button onClick={handleLogout} className="btn btn-sm btn-danger" style={{ marginLeft: '8px' }}>
+            <div className="user-session-badge">
+              <div className={`user-avatar user-avatar-${currentUserState.role}`}>
+                {currentUserState.hoTen.charAt(0).toUpperCase()}
+              </div>
+              <div className="user-session-info">
+                <span className="user-session-name">{currentUserState.hoTen}</span>
+                <span className={`role-badge-sm role-${currentUserState.role}`}>
+                  {userIsAdmin ? '👑' : '✏️'} {ROLE_LABELS[currentUserState.role]}
+                </span>
+              </div>
+            </div>
+            <button onClick={handleLogout} className="btn btn-sm btn-danger" style={{ marginLeft: '4px' }}>
               Đăng xuất
             </button>
           </nav>
@@ -321,7 +384,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="tabs">
-          <button 
+          <button
             className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('dashboard')}
             id="tab-dashboard"
@@ -342,13 +405,31 @@ export default function AdminPage() {
           >
             📋 Quy trình
           </button>
-          <button
-            className={`tab-btn ${activeTab === 'danhmuc' ? 'active' : ''}`}
-            onClick={() => setActiveTab('danhmuc')}
-            id="tab-danhmuc"
-          >
-            🗂️ Danh mục
-          </button>
+          {userIsAdmin && (
+            <>
+              <button
+                className={`tab-btn ${activeTab === 'danhmuc' ? 'active' : ''}`}
+                onClick={() => setActiveTab('danhmuc')}
+                id="tab-danhmuc"
+              >
+                🗂️ Danh mục
+              </button>
+              <button
+                className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+                onClick={() => setActiveTab('users')}
+                id="tab-users"
+              >
+                👤 Thành viên
+              </button>
+              <button
+                className={`tab-btn ${activeTab === 'email' ? 'active' : ''}`}
+                onClick={() => setActiveTab('email')}
+                id="tab-email"
+              >
+                📧 Email
+              </button>
+            </>
+          )}
         </div>
 
         {/* ====== DASHBOARD TAB ====== */}
@@ -443,15 +524,19 @@ export default function AdminPage() {
                 />
               </div>
               <div className="toolbar-actions">
-                <button className="btn btn-secondary" onClick={() => exportImportTemplate()} title="Tải file mẫu nhập liệu" id="btn-download-template">
-                  📄 File mẫu
-                </button>
-                <button className="btn btn-secondary" onClick={() => setShowImportModal(true)} id="btn-import">
-                  📥 Nhập Excel
-                </button>
-                <button className="btn btn-secondary" onClick={handleExport} disabled={applicants.length === 0} id="btn-export">
-                  📤 Xuất Excel
-                </button>
+                {userIsAdmin && (
+                  <>
+                    <button className="btn btn-secondary" onClick={() => exportImportTemplate()} title="Tải file mẫu nhập liệu" id="btn-download-template">
+                      📄 File mẫu
+                    </button>
+                    <button className="btn btn-secondary" onClick={() => setShowImportModal(true)} id="btn-import">
+                      📥 Nhập Excel
+                    </button>
+                    <button className="btn btn-secondary" onClick={handleExport} disabled={applicants.length === 0} id="btn-export">
+                      📤 Xuất Excel
+                    </button>
+                  </>
+                )}
                 <button className="btn btn-accent" onClick={openAddModal} id="btn-add-applicant">
                   ＋ Thêm quần chúng
                 </button>
@@ -491,15 +576,19 @@ export default function AdminPage() {
                         <td style={{ fontSize: 'var(--text-xs)' }}>{a.chiBoDangBo}</td>
                         <td>
                           <div className="table-actions">
-                            <button className="btn btn-sm btn-secondary" onClick={() => openEditModal(a)}>
-                              ✏️
-                            </button>
-                            <button className="btn btn-sm btn-secondary" onClick={() => openProcessModal(a)}>
+                            {userIsAdmin && (
+                              <button className="btn btn-sm btn-secondary" onClick={() => openEditModal(a)} title="Sửa thông tin">
+                                ✏️
+                              </button>
+                            )}
+                            <button className="btn btn-sm btn-secondary" onClick={() => openProcessModal(a)} title="Quản lý quy trình">
                               📋
                             </button>
-                            <button className="btn btn-sm btn-danger" onClick={() => setShowDeleteConfirm(a.id)}>
-                              🗑️
-                            </button>
+                            {userIsAdmin && (
+                              <button className="btn btn-sm btn-danger" onClick={() => setShowDeleteConfirm(a.id)} title="Xóa">
+                                🗑️
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -553,7 +642,7 @@ export default function AdminPage() {
                         {isCancelled ? (
                           <span className="status-badge status-huy_ho_so">✕ Hủy hồ sơ</span>
                         ) : (
-                          <span className="status-badge status-dang_xu_ly">{progress}% — Bước {step}/10</span>
+                          <span className="status-badge status-dang_xu_ly">{progress}% — Bước {step}/{a.quyTrinh.length}</span>
                         )}
                         <button className="btn btn-sm btn-accent" onClick={() => openProcessModal(a)}>
                           Cập nhật
@@ -568,12 +657,25 @@ export default function AdminPage() {
           </>
         )}
 
-        {/* ====== DANH MUC TAB ====== */}
-        {activeTab === 'danhmuc' && (
+        {/* ====== DANH MUC TAB (Admin only) ====== */}
+        {activeTab === 'danhmuc' && userIsAdmin && (
           <DanhMucTab
             onAlert={setAlert}
             onChiBoChanged={loadData}
           />
+        )}
+
+        {/* ====== USERS TAB (Admin only) ====== */}
+        {activeTab === 'users' && userIsAdmin && (
+          <UserManagementTab
+            onAlert={setAlert}
+            currentUser={currentUserState}
+          />
+        )}
+
+        {/* ====== EMAIL TAB (Admin only) ====== */}
+        {activeTab === 'email' && userIsAdmin && (
+          <EmailTemplateTab onAlert={setAlert} />
         )}
       </div>
 
@@ -694,7 +796,15 @@ export default function AdminPage() {
               {selectedApplicant.quyTrinh.map((step) => (
                 <div key={step.soThuTu} className="process-step-row">
                   <div className="process-step-number">{step.soThuTu}</div>
-                  <div className="process-step-name">{step.tenQuyTrinh}</div>
+                  <div className="process-step-info">
+                    <div className="process-step-name">{step.tenQuyTrinh}</div>
+                    {step.nguoiCapNhat && (
+                      <div className="process-step-audit">
+                        👤 {step.nguoiCapNhat}
+                        {step.gioCapNhat && ` · ${step.gioCapNhat}`}
+                      </div>
+                    )}
+                  </div>
                   <select
                     className="process-step-select"
                     value={step.trangThai}
@@ -753,7 +863,6 @@ export default function AdminPage() {
               <button className="modal-close" onClick={handleCloseImport}>✕</button>
             </div>
             <div className="modal-body">
-              {/* Step 1: Choose file */}
               <div className="import-step">
                 <div className="import-step-title">
                   <span className="import-step-num">1</span> Chọn file Excel (.xlsx)
@@ -798,7 +907,6 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Errors */}
               {importErrors.length > 0 && (
                 <div className="import-errors">
                   <div className="import-errors-title">⚠️ Phát hiện {importErrors.length} lỗi:</div>
@@ -810,7 +918,6 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Step 2: Preview */}
               {importPreview.length > 0 && (
                 <div className="import-step">
                   <div className="import-step-title">

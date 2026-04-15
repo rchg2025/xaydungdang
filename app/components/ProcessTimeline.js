@@ -107,6 +107,10 @@ export default function ProcessTimeline({ quyTrinh, compact = false }) {
                 {step.ngayCapNhat && (
                   <div className="timeline-item-date">
                     📅 Cập nhật: {new Date(step.ngayCapNhat).toLocaleDateString('vi-VN')}
+                    {step.gioCapNhat && ` lúc ${step.gioCapNhat}`}
+                    {step.nguoiCapNhat && (
+                      <span className="timeline-updater"> — bởi <strong>{step.nguoiCapNhat}</strong></span>
+                    )}
                   </div>
                 )}
                 {step.ghiChu && (

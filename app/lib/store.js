@@ -179,6 +179,8 @@ export function addApplicant(applicantData) {
       tenQuyTrinh: step.tenQuyTrinh,
       trangThai: STATUSES.CHUA_BAT_DAU,
       ngayCapNhat: '',
+      gioCapNhat: '',
+      nguoiCapNhat: '',
       ghiChu: '',
     })),
   };
@@ -212,7 +214,7 @@ export function deleteApplicant(id) {
 }
 
 // ---- Cập nhật trạng thái bước quy trình ----
-export function updateProcessStep(applicantId, soThuTu, trangThai, ghiChu = '') {
+export function updateProcessStep(applicantId, soThuTu, trangThai, ghiChu = '', nguoiCapNhat = '') {
   const applicants = getAllApplicants();
   const applicant = applicants.find(a => a.id === applicantId);
   if (!applicant) throw new Error('Không tìm thấy quần chúng!');
@@ -220,13 +222,19 @@ export function updateProcessStep(applicantId, soThuTu, trangThai, ghiChu = '') 
   const step = applicant.quyTrinh.find(s => s.soThuTu === soThuTu);
   if (!step) throw new Error('Không tìm thấy bước quy trình!');
 
+  const now = new Date();
   step.trangThai = trangThai;
-  step.ngayCapNhat = new Date().toISOString().split('T')[0];
+  step.ngayCapNhat = now.toISOString().split('T')[0];
+  step.gioCapNhat = now.toLocaleString('vi-VN', {
+    hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
+  });
+  step.nguoiCapNhat = nguoiCapNhat || '';
   if (ghiChu) step.ghiChu = ghiChu;
 
   saveAll(applicants);
   return applicant;
 }
+
 
 // ---- Tìm kiếm theo CCCD ----
 export function searchByCCCD(cccd) {
