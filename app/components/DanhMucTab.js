@@ -16,7 +16,7 @@ import {
 // =============================================
 // Danh Mục Tab Component
 // =============================================
-export default function DanhMucTab({ onAlert, onChiBoChanged }) {
+export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
   const [subTab, setSubTab] = useState('quyTrinh');
 
   // ---- Quy trình state ----
@@ -58,7 +58,8 @@ export default function DanhMucTab({ onAlert, onChiBoChanged }) {
       const updated = addProcessStepTemplate(newStepName);
       setSteps(updated);
       setNewStepName('');
-      onAlert({ type: 'success', message: 'Đã thêm bước quy trình mới!' });
+      onAlert({ type: 'success', message: 'Đã thêm bước quy trình và đồng bộ tất cả hồ sơ!' });
+      if (onReload) onReload();
     } catch (err) {
       onAlert({ type: 'error', message: err.message });
     }
@@ -75,7 +76,8 @@ export default function DanhMucTab({ onAlert, onChiBoChanged }) {
       const updated = updateProcessStepTemplate(editingStep.soThuTu, editStepName);
       setSteps(updated);
       setEditingStep(null);
-      onAlert({ type: 'success', message: 'Đã cập nhật tên bước quy trình!' });
+      onAlert({ type: 'success', message: 'Đã cập nhật tên bước và đồng bộ tất cả hồ sơ!' });
+      if (onReload) onReload();
     } catch (err) {
       onAlert({ type: 'error', message: err.message });
     }
@@ -86,7 +88,8 @@ export default function DanhMucTab({ onAlert, onChiBoChanged }) {
       const updated = deleteProcessStepTemplate(soThuTu);
       setSteps(updated);
       setDeletingStep(null);
-      onAlert({ type: 'success', message: 'Đã xóa bước quy trình!' });
+      onAlert({ type: 'success', message: 'Đã xóa bước và đồng bộ tất cả hồ sơ!' });
+      if (onReload) onReload();
     } catch (err) {
       onAlert({ type: 'error', message: err.message });
     }
@@ -96,6 +99,7 @@ export default function DanhMucTab({ onAlert, onChiBoChanged }) {
     try {
       const updated = moveProcessStepTemplate(soThuTu, direction);
       setSteps(updated);
+      if (onReload) onReload();
     } catch (err) {
       onAlert({ type: 'error', message: err.message });
     }
@@ -314,10 +318,10 @@ export default function DanhMucTab({ onAlert, onChiBoChanged }) {
 
           {/* Info note */}
           <div className="danhmuc-info-note">
-            <span>ℹ️</span>
+            <span>✅</span>
             <span>
-              Các bước này chỉ áp dụng cho hồ sơ <strong>tạo mới</strong> sau khi cập nhật.
-              Hồ sơ đang xử lý không bị thay đổi.
+              Mọi thay đổi về bước quy trình sẽ <strong>tự động đồng bộ</strong> lên tất cả hồ sơ hiện có.
+              Tiến độ đã thực hiện được giữ nguyên — chỉ cập nhật tên bước và thêm/xóa bước mới.
             </span>
           </div>
         </div>

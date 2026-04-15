@@ -174,7 +174,7 @@ export function addApplicant(applicantData) {
     email: applicantData.email,
     chiBoDangBo: applicantData.chiBoDangBo,
     ngayTao: new Date().toISOString().split('T')[0],
-    quyTrinh: DEFAULT_PROCESS_STEPS.map(step => ({
+    quyTrinh: getProcessStepTemplates().map(step => ({
       soThuTu: step.soThuTu,
       tenQuyTrinh: step.tenQuyTrinh,
       trangThai: STATUSES.CHUA_BAT_DAU,
@@ -411,6 +411,7 @@ export function addProcessStepTemplate(tenQuyTrinh) {
   const newStep = { soThuTu: maxSoThuTu + 1, tenQuyTrinh: trimmed };
   steps.push(newStep);
   saveProcessStepTemplates(steps);
+  syncAllApplicantsWithTemplate();
   return steps;
 }
 
@@ -423,6 +424,7 @@ export function updateProcessStepTemplate(soThuTu, tenQuyTrinh) {
   if (!step) throw new Error('Không tìm thấy bước quy trình!');
   step.tenQuyTrinh = trimmed;
   saveProcessStepTemplates(steps);
+  syncAllApplicantsWithTemplate();
   return steps;
 }
 
@@ -435,6 +437,7 @@ export function deleteProcessStepTemplate(soThuTu) {
   // Cập nhật lại số thứ tự
   steps.forEach((s, i) => { s.soThuTu = i + 1; });
   saveProcessStepTemplates(steps);
+  syncAllApplicantsWithTemplate();
   return steps;
 }
 
@@ -448,7 +451,40 @@ export function moveProcessStepTemplate(soThuTu, direction) {
   [steps[idx], steps[targetIdx]] = [steps[targetIdx], steps[idx]];
   steps.forEach((s, i) => { s.soThuTu = i + 1; });
   saveProcessStepTemplates(steps);
+  syncAllApplicantsWithTemplate();
   return steps;
+}
+
+// ---- Đồng bộ tất cả hồ sơ theo template hiện tại ----
+export function syncAllApplicantsWithTemplate() {
+  if (typeof window === 'undefined') return;
+  const template = getProcessStepTemplates();
+  const applicants = getAllApplicants();
+
+  applicants.forEach(a => {
+    // Map step cũ theo soThuTu
+    const oldMap = {};
+    a.quyTrinh.forEach(s => { oldMap[s.soThuTu] = s; });
+
+    // Rebuild quyTrinh theo template mới
+    a.quyTrinh = template.map(tmpl => {
+      const existing = oldMap[tmpl.soThuTu];
+      if (existing) {
+        // Giữ nguyên tiến độ, chỉ cập nhật tên bước
+        return { ...existing, tenQuyTrinh: tmpl.tenQuyTrinh, soThuTu: tmpl.soThuTu };
+      }
+      // Bước mới chưa có trong hồ sơ
+      return {
+        soThuTu: tmpl.soThuTu,
+        tenQuyTrinh: tmpl.tenQuyTrinh,
+        trangThai: STATUSES.CHUA_BAT_DAU,
+        ngayCapNhat: '',
+        ghiChu: '',
+      };
+    });
+  });
+
+  saveAll(applicants);
 }
 
 // ---- Cập nhật bước quy trình với ghi chú ----
