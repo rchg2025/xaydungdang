@@ -36,8 +36,10 @@ export default function UserManagementTab({ onAlert, currentUser }) {
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
-  // Ắn superadmin khỏi danh sách
-  const visibleUsers = users.filter((u) => u.username !== SUPERADMIN_USERNAME);
+  // Ẩn superadmin khỏi danh sách — trừ khi chính tài khoản qtv đang đăng nhập
+  const visibleUsers = users.filter((u) =>
+    u.username !== SUPERADMIN_USERNAME || currentUser?.username === SUPERADMIN_USERNAME
+  );
 
   // ---- Filtered ----
   const filtered = visibleUsers.filter(u => {
@@ -214,8 +216,8 @@ export default function UserManagementTab({ onAlert, currentUser }) {
                         >
                           🔑
                         </button>
-                        {/* Ẩn nút vô hiệu hóa và xóa với superadmin */}
-                        {u.username !== SUPERADMIN_USERNAME && (
+                        {/* Ẩn nút vô hiệu hóa và xóa của qtv với người dùng khác */}
+                        {(u.username !== SUPERADMIN_USERNAME || currentUser?.username === SUPERADMIN_USERNAME) && (
                           <button
                             className="btn btn-sm btn-secondary"
                             onClick={() => handleToggleActive(u)}
@@ -224,7 +226,7 @@ export default function UserManagementTab({ onAlert, currentUser }) {
                             {u.active ? '⛔' : '✅'}
                           </button>
                         )}
-                        {u.username !== SUPERADMIN_USERNAME && u.id !== currentUser?.id && (
+                        {(u.username !== SUPERADMIN_USERNAME || currentUser?.username === SUPERADMIN_USERNAME) && u.id !== currentUser?.id && (
                           <button
                             className="btn btn-sm btn-danger"
                             onClick={() => setDeletingUser(u)}
