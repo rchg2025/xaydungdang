@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ProcessTimeline from './components/ProcessTimeline';
-import { searchApplicants, initializeData, getCurrentStep } from './lib/store';
+import { searchApplicants, initializeData, getCurrentStep, getStatistics } from './lib/store';
 
 export default function HomePage() {
   const [cccd, setCccd] = useState('');
@@ -12,9 +12,11 @@ export default function HomePage() {
   const [searched, setSearched] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     initializeData();
+    setStats(getStatistics());
   }, []);
 
   const handleSearch = (e) => {
@@ -73,9 +75,52 @@ export default function HomePage() {
           <span className="gradient-text">Quy trình tiếp nhận hồ sơ Kết nạp Đảng</span>
         </h1>
         <p>
-          Tra cứu nhanh tiến độ quy trình kết nạp Đảng viên bằng số CCCD hoặc Chi bộ/Đảng bộ cơ sở
+          Tra cứu nhanh tiến độ xử lý hồ sơ kết nạp Đảng viên bằng số CCCD hoặc Chi bộ/Đảng bộ cơ sở
         </p>
       </section>
+
+      {/* Public Stats */}
+      {stats && (
+        <section style={{ maxWidth: '960px', margin: '0 auto', padding: '0 1.5rem 1.5rem' }}>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.12)', color: '#60a5fa', boxShadow: '0 0 0 1px rgba(59,130,246,0.2)' }}>📁</div>
+              <div className="stat-card-body">
+                <div className="stat-card-value" style={{ color: '#60a5fa' }}>{stats.tongSo}</div>
+                <div className="stat-card-label">Tổng hồ sơ</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card-icon" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', boxShadow: '0 0 0 1px rgba(99,102,241,0.2)' }}>🔄</div>
+              <div className="stat-card-body">
+                <div className="stat-card-value" style={{ color: '#818cf8' }}>{stats.dangXuLy}</div>
+                <div className="stat-card-label">Đang xử lý</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card-icon" style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399', boxShadow: '0 0 0 1px rgba(16,185,129,0.2)' }}>✅</div>
+              <div className="stat-card-body">
+                <div className="stat-card-value" style={{ color: '#10b981' }}>{stats.daHoanThanh}</div>
+                <div className="stat-card-label">Hoàn thành</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card-icon" style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', boxShadow: '0 0 0 1px rgba(245,158,11,0.2)' }}>⏳</div>
+              <div className="stat-card-body">
+                <div className="stat-card-value" style={{ color: '#f59e0b' }}>{stats.choXuLy}</div>
+                <div className="stat-card-label">Chờ xử lý</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', boxShadow: '0 0 0 1px rgba(239,68,68,0.2)' }}>❌</div>
+              <div className="stat-card-body">
+                <div className="stat-card-value" style={{ color: '#ef4444' }}>{stats.daHuy}</div>
+                <div className="stat-card-label">Đã từ chối</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Search */}
       <section className="search-section">

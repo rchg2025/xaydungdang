@@ -11,7 +11,7 @@ import ProcessTimeline from './ProcessTimeline';
 export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onAlert, onReload }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedId, setExpandedId] = useState(null);
-  const [editingStep, setEditingStep] = useState(null); // { applicantId, soThuTu, value }
+  const [editingStep, setEditingStep] = useState(null); // { applicantId, soThuTu, value, lyDo }
 
   // Sort newest first + filter
   const sorted = [...applicants].sort((a, b) => new Date(b.ngayTao) - new Date(a.ngayTao));
@@ -21,9 +21,12 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
     return a.hoTen.toLowerCase().includes(t) || a.cccd.includes(t);
   });
 
-  const handleUpdateStep = (applicantId, soThuTu, trangThai) => {
+  const handleUpdateStep = (applicantId, soThuTu, trangThai, lyDo = '') => {
     try {
-      updateProcessStep(applicantId, soThuTu, trangThai, '', currentUser?.hoTen || '');
+      const ghiChu = trangThai === STATUSES.HUY_HO_SO && lyDo.trim()
+        ? `Lý do từ chối: ${lyDo.trim()}`
+        : lyDo.trim();
+      updateProcessStep(applicantId, soThuTu, trangThai, ghiChu, currentUser?.hoTen || '');
       onReload();
       onAlert({ type: 'success', message: `Đã cập nhật bước ${soThuTu}!` });
       setEditingStep(null);
@@ -83,7 +86,7 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
                     <span>🪪 {a.cccd}</span>
                     <span>🏛️ {a.chiBoDangBo}</span>
                     {isCancelled ? (
-                      <span className="status-badge status-huy_ho_so">✕ Hủy hồ sơ</span>
+                      <span className="status-badge status-huy_ho_so">✕ Đã từ chối</span>
                     ) : (
                       <span className="status-badge status-dang_xu_ly">Bước {step}/{a.quyTrinh.length} · {progress}%</span>
                     )}
@@ -127,25 +130,38 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
 
                         {/* Status badge or editable select */}
                         {isEditing ? (
-                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '240px' }}>
                             <select
                               className="process-step-select"
                               value={editingStep.value}
-                              onChange={e => setEditingStep({ ...editingStep, value: e.target.value })}
+                              onChange={e => setEditingStep({ ...editingStep, value: e.target.value, lyDo: e.target.value !== STATUSES.HUY_HO_SO ? '' : (editingStep.lyDo || '') })}
                               autoFocus
                             >
                               {Object.entries(STATUS_LABELS).map(([k, v]) => (
                                 <option key={k} value={k}>{v}</option>
                               ))}
                             </select>
-                            <button
-                              className="btn btn-sm btn-primary"
-                              onClick={() => handleUpdateStep(a.id, s.soThuTu, editingStep.value)}
-                            >✓</button>
-                            <button
-                              className="btn btn-sm btn-secondary"
-                              onClick={() => setEditingStep(null)}
-                            >✕</button>
+                            {editingStep.value === STATUSES.HUY_HO_SO && (
+                              <input
+                                type="text"
+                                className="form-input"
+                                style={{ fontSize: 'var(--text-xs)', padding: '6px 10px' }}
+                                placeholder="Nhập lý do từ chối..."
+                                value={editingStep.lyDo || ''}
+                                onChange={e => setEditingStep({ ...editingStep, lyDo: e.target.value })}
+                              />
+                            )}
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                className="btn btn-sm btn-primary"
+                                onClick={() => handleUpdateStep(a.id, s.soThuTu, editingStep.value, editingStep.lyDo || '')}
+                                disabled={editingStep.value === STATUSES.HUY_HO_SO && !editingStep.lyDo?.trim()}
+                              >✓ Xác nhận</button>
+                              <button
+                                className="btn btn-sm btn-secondary"
+                                onClick={() => setEditingStep(null)}
+                              >✕</button>
+                            </div>
                           </div>
                         ) : (
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

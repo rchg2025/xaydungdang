@@ -115,8 +115,13 @@ export default function ProcessTimeline({ quyTrinh, compact = false }) {
                   </div>
                 )}
                 {step.ghiChu && (
-                  <div className="timeline-item-note">
-                    💬 {step.ghiChu}
+                  <div className={`timeline-item-note ${
+                    step.ghiChu.startsWith('Lý do từ chối:') ? 'timeline-item-note-reject' : ''
+                  }`}>
+                    {step.ghiChu.startsWith('Lý do từ chối:')
+                      ? <>🚫 <strong>{step.ghiChu}</strong></>
+                      : <>💬 {step.ghiChu}</>
+                    }
                   </div>
                 )}
               </div>

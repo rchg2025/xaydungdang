@@ -693,6 +693,16 @@ input, select, textarea, button {
   margin-top: 2px;
 }
 
+.timeline-item-note-reject {
+  color: var(--color-danger);
+  font-style: normal;
+  background: var(--color-danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  margin-top: 6px;
+}
+
 /* ---- Status Badge ---- */
 .status-badge {
   display: inline-flex;

@@ -23,7 +23,7 @@ export const STATUS_LABELS = {
   da_gui: 'Đã gửi',
   dang_xu_ly: 'Đang xử lý',
   da_nhan_phan_hoi: 'Đã xong',
-  huy_ho_so: 'Hủy hồ sơ',
+  huy_ho_so: 'Đã từ chối',
 };
 
 export const STATUS_COLORS = {
