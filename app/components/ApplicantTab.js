@@ -61,6 +61,7 @@ function Paginator({ page, total, onPage, totalItems }) {
 // =============================================
 export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, currentUser, onAlert, onReload }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [chiBoSearch, setChiBoSearch] = useState('');
   const [page, setPage] = useState(1);
 
   // ---- Bộ lọc mới ----
@@ -131,12 +132,14 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
   const openAdd = () => {
     setEditingApplicant(null);
     setFormData({ cccd: '', hoTen: '', ngaySinh: '', soDienThoai: '', email: '', chiBoDangBo: '' });
+    setChiBoSearch('');
     setShowApplicantModal(true);
   };
 
   const openEdit = (a) => {
     setEditingApplicant(a);
     setFormData({ cccd: a.cccd, hoTen: a.hoTen, ngaySinh: a.ngaySinh, soDienThoai: a.soDienThoai, email: a.email, chiBoDangBo: a.chiBoDangBo });
+    setChiBoSearch('');
     setShowApplicantModal(true);
   };
 
@@ -456,10 +459,20 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
                 </div>
                 <div className="form-group">
                   <label>Chi bộ / Đảng bộ *</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="🔍 Nhập từ khóa để lọc nhanh chi bộ..."
+                    value={chiBoSearch}
+                    onChange={e => setChiBoSearch(e.target.value)}
+                    style={{ marginBottom: '8px', background: 'var(--color-surface)' }}
+                  />
                   <select className="form-select" required
                     value={formData.chiBoDangBo} onChange={e => setFormData({ ...formData, chiBoDangBo: e.target.value })}>
                     <option value="">-- Chọn chi bộ / đảng bộ --</option>
-                    {chiBoList.map(cb => <option key={cb.ten} value={cb.ten}>{cb.ten}</option>)}
+                    {chiBoList
+                      .filter(cb => cb.ten.toLowerCase().includes(chiBoSearch.toLowerCase()))
+                      .map(cb => <option key={cb.ten} value={cb.ten}>{cb.ten}</option>)}
                   </select>
                 </div>
               </div>
