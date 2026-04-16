@@ -1602,6 +1602,16 @@ input, select, textarea, button {
   background: var(--color-surface-hover);
 }
 
+.danhmuc-item.dragging {
+  opacity: 0.5;
+  background: var(--color-surface-hover);
+  border: 1px dashed var(--color-border-hover);
+}
+
+.danhmuc-item.drag-over {
+  border-top: 2px solid var(--color-primary);
+}
+
 /* ---- Order Controls ---- */
 .danhmuc-order-controls {
   display: flex;

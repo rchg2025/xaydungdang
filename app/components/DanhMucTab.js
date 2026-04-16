@@ -10,7 +10,7 @@ import {
   createProcessTemplate,
   renameProcessTemplate,
   deleteProcessTemplate,
-  moveProcessTemplate,
+  updateProcessTemplatesOrder,
 } from '../lib/apiClient';
 
 // =============================================
@@ -25,6 +25,10 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
   const [editingStep, setEditingStep] = useState(null);
   const [editStepName, setEditStepName] = useState('');
   const [deletingStep, setDeletingStep] = useState(null);
+
+  const [draggedItemIdx, setDraggedItemIdx] = useState(null);
+  const [dragOverItemIdx, setDragOverItemIdx] = useState(null);
+  const [hasOrderChanged, setHasOrderChanged] = useState(false);
 
   // ---- Chi bộ state ----
   const [chiBoList, setChiBoList] = useState([]);
@@ -99,10 +103,41 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
     }
   };
 
-  const handleMoveStep = async (soThuTu, direction) => {
+  const handleDragStart = (e, index) => {
+    if (stepSearch !== '') return; // Không cho kéo thả khi đang tìm kiếm
+    setDraggedItemIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragEnter = (e, index) => {
+    if (stepSearch !== '') return;
+    setDragOverItemIdx(index);
+  };
+
+  const handleDragEnd = () => {
+    if (draggedItemIdx !== null && dragOverItemIdx !== null && draggedItemIdx !== dragOverItemIdx) {
+      const newSteps = [...steps];
+      const draggedItem = newSteps[draggedItemIdx];
+      newSteps.splice(draggedItemIdx, 1);
+      newSteps.splice(dragOverItemIdx, 0, draggedItem);
+      setSteps(newSteps);
+      setHasOrderChanged(true);
+    }
+    setDraggedItemIdx(null);
+    setDragOverItemIdx(null);
+  };
+
+  const handleSaveOrder = async () => {
     try {
-      const updated = await moveProcessTemplate(soThuTu, direction);
+      const orderedTemplates = steps.map((s, idx) => ({
+        id: s.id,
+        oldThuTu: s.soThuTu,
+        newThuTu: idx + 1
+      }));
+      const updated = await updateProcessTemplatesOrder(orderedTemplates);
       setSteps(updated);
+      setHasOrderChanged(false);
+      onAlert({ type: 'success', message: 'Đã cập nhật thứ tự mới và đồng bộ tất cả hồ sơ!' });
       if (onReload) onReload();
     } catch (err) {
       onAlert({ type: 'error', message: err.message });
@@ -201,18 +236,30 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
                 Quản lý các bước quy trình mẫu. Thứ tự và tên bước sẽ được áp dụng khi tạo hồ sơ mới.
               </p>
             </div>
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={() => {
-                syncAllApplicantsWithTemplate();
-                loadSteps();
-                if (onReload) onReload();
-                onAlert({ type: 'success', message: 'Đã đồng bộ tất cả hồ sơ theo danh mục hiện tại!' });
-              }}
-              title="Đồng bộ ngay toàn bộ hồ sơ theo danh mục"
-            >
-              🔄 Đồng bộ tất cả hồ sơ
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {hasOrderChanged && (
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleSaveOrder}
+                  title="Lưu lại thứ tự các bước vừa thay đổi"
+                  style={{ animation: 'pulse 2s infinite' }}
+                >
+                  💾 Lưu thứ tự mới
+                </button>
+              )}
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => {
+                  syncAllApplicantsWithTemplate();
+                  loadSteps();
+                  if (onReload) onReload();
+                  onAlert({ type: 'success', message: 'Đã đồng bộ tất cả hồ sơ theo danh mục hiện tại!' });
+                }}
+                title="Đồng bộ ngay toàn bộ hồ sơ theo danh mục"
+              >
+                🔄 Đồng bộ tất cả hồ sơ
+              </button>
+            </div>
           </div>
 
           {/* Add form */}
@@ -262,25 +309,23 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
           ) : (
             <div className="danhmuc-list">
               {filteredSteps.map((step, idx) => (
-                <div key={step.soThuTu} className="danhmuc-item">
-                  {/* Order controls */}
-                  <div className="danhmuc-order-controls">
-                    <button
-                      className="danhmuc-order-btn"
-                      onClick={() => handleMoveStep(step.soThuTu, 'up')}
-                      disabled={idx === 0 || stepSearch !== ''}
-                      title="Di chuyển lên"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      className="danhmuc-order-btn"
-                      onClick={() => handleMoveStep(step.soThuTu, 'down')}
-                      disabled={idx === filteredSteps.length - 1 || stepSearch !== ''}
-                      title="Di chuyển xuống"
-                    >
-                      ▼
-                    </button>
+                <div
+                  key={step.id || step.soThuTu}
+                  className={`danhmuc-item ${draggedItemIdx === idx ? 'dragging' : ''} ${dragOverItemIdx === idx ? 'drag-over' : ''}`}
+                  draggable={stepSearch === ''}
+                  onDragStart={(e) => handleDragStart(e, idx)}
+                  onDragEnter={(e) => handleDragEnter(e, idx)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => e.preventDefault()}
+                  style={{ opacity: draggedItemIdx === idx ? 0.5 : 1 }}
+                >
+                  {/* Drag Handle */}
+                  <div
+                    className="danhmuc-drag-handle"
+                    style={{ padding: '0 8px', color: '#999', cursor: stepSearch === '' ? 'grab' : 'default', fontSize: '1.2rem' }}
+                    title={stepSearch === '' ? "Kéo thả để đổi vị trí" : "Không thể kéo thả khi đang tìm kiếm"}
+                  >
+                    ☰
                   </div>
 
                   {/* Step number */}

@@ -122,6 +122,12 @@ export async function moveProcessTemplate(soThuTu, direction) {
   });
 }
 
+export async function updateProcessTemplatesOrder(orderedTemplates) {
+  return apiFetch(`${API}/process-templates`, {
+    method: 'PUT', body: JSON.stringify({ orderedTemplates, action: 'reorder' }),
+  });
+}
+
 export async function deleteProcessTemplate(soThuTu) {
   return apiFetch(`${API}/process-templates`, { method: 'DELETE', body: JSON.stringify({ soThuTu }) });
 }

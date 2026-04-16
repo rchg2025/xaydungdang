@@ -53,7 +53,7 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    const { soThuTu, tenQuyTrinh, action, direction } = await request.json();
+    const { soThuTu, tenQuyTrinh, action, direction, orderedTemplates } = await request.json();
 
     if (action === 'rename') {
       await prisma.processTemplate.update({
@@ -87,6 +87,36 @@ export async function PUT(request) {
       await prisma.processStep.updateMany({ where: { soThuTu: num1 }, data: { soThuTu: -1 } });
       await prisma.processStep.updateMany({ where: { soThuTu: num2 }, data: { soThuTu: num1 } });
       await prisma.processStep.updateMany({ where: { soThuTu: -1 }, data: { soThuTu: num2 } });
+    } else if (action === 'reorder') {
+      if (!orderedTemplates || !Array.isArray(orderedTemplates)) {
+        return Response.json({ error: 'Dữ liệu không hợp lệ' }, { status: 400 });
+      }
+
+      // 1. Move to negative temporary IDs to avoid UNIQUE constraint violation on `soThuTu`
+      for (const item of orderedTemplates) {
+        await prisma.processTemplate.update({
+          where: { id: item.id },
+          data: { soThuTu: -item.oldThuTu }
+        });
+        await prisma.processStep.updateMany({
+          where: { soThuTu: item.oldThuTu },
+          data: { soThuTu: -item.oldThuTu }
+        });
+      }
+
+      // 2. Set to correct new order
+      for (let i = 0; i < orderedTemplates.length; i++) {
+        const item = orderedTemplates[i];
+        const newSoThuTu = i + 1;
+        await prisma.processTemplate.update({
+          where: { id: item.id },
+          data: { soThuTu: newSoThuTu }
+        });
+        await prisma.processStep.updateMany({
+          where: { soThuTu: -item.oldThuTu },
+          data: { soThuTu: newSoThuTu }
+        });
+      }
     }
 
     const templates = await prisma.processTemplate.findMany({ orderBy: { soThuTu: 'asc' } });
