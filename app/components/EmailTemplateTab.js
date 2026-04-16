@@ -23,6 +23,7 @@ export default function EmailTemplateTab({ onAlert }) {
   const [body, setBody] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
   const [testEmail, setTestEmail] = useState('');
   const [testing, setTesting] = useState(false);
   const [showGmailGuide, setShowGmailGuide] = useState(false);
@@ -47,8 +48,12 @@ export default function EmailTemplateTab({ onAlert }) {
     try {
       await saveEmailTemplate(activeType, subject, body);
       setHasChanges(false);
+      setSaveStatus({ type: 'success', message: '✅ Đã lưu thành công!' });
+      setTimeout(() => setSaveStatus(null), 3000);
       onAlert({ type: 'success', message: 'Đã lưu template email!' });
     } catch (err) {
+      setSaveStatus({ type: 'error', message: `❌ Lỗi: ${err.message}` });
+      setTimeout(() => setSaveStatus(null), 3000);
       onAlert({ type: 'error', message: err.message });
     }
   };
@@ -260,7 +265,7 @@ export default function EmailTemplateTab({ onAlert }) {
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button className="btn btn-primary" onClick={handleSave} disabled={!hasChanges}>
             💾 Lưu template
           </button>
@@ -270,6 +275,16 @@ export default function EmailTemplateTab({ onAlert }) {
           <button className="btn btn-secondary" onClick={handleReset}>
             ↻ Khôi phục mặc định
           </button>
+          {saveStatus && (
+            <span style={{ 
+              color: saveStatus.type === 'error' ? 'var(--color-danger)' : 'var(--color-success)', 
+              fontWeight: '600', 
+              marginLeft: '8px',
+              animation: 'fadeIn 0.3s ease-in'
+            }}>
+              {saveStatus.message}
+            </span>
+          )}
         </div>
 
         {/* Preview */}
