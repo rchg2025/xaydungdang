@@ -41,7 +41,7 @@ export async function sendEmail(templateType, recipientEmail, data = {}) {
 // =============================================
 // GỬI THÔNG BÁO CẬP NHẬT BƯỚC → EMAIL CHI BỘ
 // =============================================
-export async function sendChiBoStatusNotification(applicant, step, trangThaiLabel, nguoiGui = '') {
+export async function sendChiBoStatusNotification(applicant, step, trangThaiLabel, nguoiGui = '', overallStatus = '') {
   // Tìm chi bộ trong danh mục (qua API)
   const chiBoList = await fetchChiBoList();
   const chiBoObj = chiBoList.find((cb) => cb.ten === applicant.chiBoDangBo);
@@ -52,7 +52,14 @@ export async function sendChiBoStatusNotification(applicant, step, trangThaiLabe
     return null;
   }
 
-  return sendEmail(TEMPLATE_TYPES.CAP_NHAT_BUOC, emailChiBo, {
+  let templateType = TEMPLATE_TYPES.CAP_NHAT_BUOC;
+  if (overallStatus === 'hoan_thanh') {
+    templateType = TEMPLATE_TYPES.HOAN_THANH;
+  } else if (overallStatus === 'huy_ho_so') {
+    templateType = TEMPLATE_TYPES.HUY_HO_SO;
+  }
+
+  return sendEmail(templateType, emailChiBo, {
     hoTen: applicant.hoTen,
     cccd: applicant.cccd,
     chiBo: applicant.chiBoDangBo,

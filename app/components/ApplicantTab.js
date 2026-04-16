@@ -182,8 +182,9 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
       const step = updated.quyTrinh.find(s => s.soThuTu === soThuTu);
       if (step) {
         try {
+          const overallStatus = getApplicantStatus(updated);
           const result = await sendChiBoStatusNotification(
-            updated, step, STATUS_LABELS[trangThai] || trangThai, currentUser?.hoTen || ''
+            updated, step, STATUS_LABELS[trangThai] || trangThai, currentUser?.hoTen || '', overallStatus
           );
           if (result) {
             onAlert({ type: 'success', message: '📧 Đã gửi email thông báo cho Chi bộ/Đảng bộ!' });
