@@ -1,11 +1,7 @@
 // =============================================
 // Database Seed Logic — chỉ chạy 1 lần duy nhất
 // =============================================
-import connectDB from './mongodb.js';
-import User from './models/User.js';
-import ChiBo from './models/ChiBo.js';
-import ProcessTemplate from './models/ProcessTemplate.js';
-import mongoose from 'mongoose';
+import prisma from './prisma.js';
 
 const DEFAULT_ADMIN = {
   username: 'qtv',
@@ -30,38 +26,30 @@ const DEFAULT_STEPS = [
   { soThuTu: 10, tenQuyTrinh: 'Công nhận Đảng viên chính thức' },
 ];
 
-// Schema đơn giản để đánh dấu đã seed
-const SeedFlagSchema = new mongoose.Schema({ key: String, seeded: Boolean }, { timestamps: true });
-const SeedFlag = mongoose.models.SeedFlag || mongoose.model('SeedFlag', SeedFlagSchema);
-
 export async function seedDatabase() {
-  await connectDB();
-
   // Kiểm tra đã seed chưa — nếu rồi thì bỏ qua
-  const flag = await SeedFlag.findOne({ key: 'initial_seed' });
+  const flag = await prisma.seedFlag.findUnique({ where: { key: 'initial_seed' } });
   if (flag?.seeded) return;
 
   // Seed admin user if no users exist
-  const userCount = await User.countDocuments();
+  const userCount = await prisma.user.count();
   if (userCount === 0) {
-    await User.create(DEFAULT_ADMIN);
+    await prisma.user.create({ data: DEFAULT_ADMIN });
     console.log('[Seed] Created default admin user');
   }
 
   // Seed process templates if none exist
-  const templateCount = await ProcessTemplate.countDocuments();
+  const templateCount = await prisma.processTemplate.count();
   if (templateCount === 0) {
-    await ProcessTemplate.insertMany(DEFAULT_STEPS);
+    await prisma.processTemplate.createMany({ data: DEFAULT_STEPS });
     console.log('[Seed] Created default process templates');
   }
 
-  // KHÔNG seed chi bộ mẫu — admin sẽ tự tạo
-
   // Đánh dấu đã seed xong
-  await SeedFlag.findOneAndUpdate(
-    { key: 'initial_seed' },
-    { key: 'initial_seed', seeded: true },
-    { upsert: true }
-  );
+  await prisma.seedFlag.upsert({
+    where: { key: 'initial_seed' },
+    update: { seeded: true },
+    create: { key: 'initial_seed', seeded: true },
+  });
   console.log('[Seed] Database initialized');
 }

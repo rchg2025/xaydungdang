@@ -1,13 +1,15 @@
 // API: /api/db/applicants/stats — GET statistics
-import connectDB from '../../../../lib/mongodb';
-import Applicant from '../../../../lib/models/Applicant';
+import prisma from '../../../../lib/prisma';
 import { seedDatabase } from '../../../../lib/seed';
 
 export async function GET() {
   try {
-    await connectDB();
     await seedDatabase();
-    const all = await Applicant.find({}).lean();
+    const all = await prisma.applicant.findMany({
+      include: {
+        quyTrinh: true
+      }
+    });
 
     const tongSo = all.length;
     let dangXuLy = 0, daHoanThanh = 0, choXuLy = 0, daHuy = 0;

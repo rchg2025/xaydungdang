@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  hoTen     String
+  email     String?  @default("")
+  role      String   @default("admin") // 'admin', 'bien_tap_vien'
+  password  String
+  ngayTao   String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProcessTemplate {
+  id          String   @id @default(cuid())
+  soThuTu     Int      @unique
+  tenQuyTrinh String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  type      String   @unique
+  subject   String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChiBo {
+  id            String   @id @default(cuid())
+  ten           String   @unique
+  biThu         String?  @default("")
+  chanhVanPhong String?  @default("")
+  soDienThoai   String?  @default("")
+  email         String?  @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Applicant {
+  id           String             @id @default(cuid())
+  cccd         String             @unique
+  hoTen        String
+  ngaySinh     String
+  soDienThoai  String?            @default("")
+  email        String?            @default("")
+  chiBoDangBo  String
+  ngayTao      String
+  quyTrinh     ProcessStep[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model ProcessStep {
+  id           String    @id @default(cuid())
+  applicantId  String
+  applicant    Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  soThuTu      Int
+  tenQuyTrinh  String
+  trangThai    String    @default("chua_bat_dau")
+  ngayCapNhat  String?   @default("")
+  gioCapNhat   String?   @default("")
+  ghiChu       String?   @default("")
+  nguoiCapNhat String?   @default("")
+  lyDoTuChoi   String?   @default("")
+
+  @@unique([applicantId, soThuTu])
+}
+
+model SeedFlag {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  seeded    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

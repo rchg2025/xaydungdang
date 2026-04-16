@@ -1,6 +1,5 @@
 // API: /api/db/email-templates — GET, POST/PUT
-import connectDB from '../../../lib/mongodb';
-import EmailTemplate from '../../../lib/models/EmailTemplate';
+import prisma from '../../../lib/prisma';
 
 // Default templates
 const DEFAULTS = {
@@ -32,9 +31,8 @@ const DEFAULTS = {
 
 export async function GET() {
   try {
-    await connectDB();
     // Return all templates, merged with defaults
-    const stored = await EmailTemplate.find({}).lean();
+    const stored = await prisma.emailTemplate.findMany();
     const result = {};
     Object.entries(DEFAULTS).forEach(([type, def]) => {
       const found = stored.find(t => t.type === type);
@@ -48,12 +46,15 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    await connectDB();
     const { type, subject, body, action } = await request.json();
 
     if (action === 'reset') {
       // Reset to default
-      await EmailTemplate.findOneAndDelete({ type });
+      try {
+        await prisma.emailTemplate.delete({ where: { type } });
+      } catch (e) {
+        // Ignored if not found
+      }
       return Response.json(DEFAULTS[type] || DEFAULTS.thong_bao);
     }
 
@@ -61,13 +62,16 @@ export async function POST(request) {
       return Response.json({ error: 'Tiêu đề và nội dung không được để trống!' }, { status: 400 });
     }
 
-    await EmailTemplate.findOneAndUpdate(
-      { type },
-      { type, subject: subject.trim(), body: body.trim() },
-      { upsert: true, new: true }
-    );
+    const trimmedSubject = subject.trim();
+    const trimmedBody = body.trim();
 
-    return Response.json({ subject: subject.trim(), body: body.trim() });
+    await prisma.emailTemplate.upsert({
+      where: { type },
+      update: { subject: trimmedSubject, body: trimmedBody },
+      create: { type, subject: trimmedSubject, body: trimmedBody },
+    });
+
+    return Response.json({ subject: trimmedSubject, body: trimmedBody });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }

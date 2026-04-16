@@ -1,20 +1,20 @@
 // API: /api/db/applicants — GET all, POST new
-import connectDB from '../../../lib/mongodb';
-import Applicant from '../../../lib/models/Applicant';
-import ProcessTemplate from '../../../lib/models/ProcessTemplate';
+import prisma from '../../../lib/prisma';
 import { seedDatabase } from '../../../lib/seed';
 
 export async function GET() {
   try {
-    await connectDB();
     await seedDatabase();
-    const applicants = await Applicant.find({}).sort({ createdAt: -1 }).lean();
-    // Convert _id to id string and sort quyTrinh
-    const data = applicants.map(a => {
-      if (a.quyTrinh) a.quyTrinh.sort((x, y) => x.soThuTu - y.soThuTu);
-      return { ...a, id: a._id.toString(), _id: undefined };
+    const applicants = await prisma.applicant.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        quyTrinh: {
+          orderBy: { soThuTu: 'asc' }
+        }
+      }
     });
-    return Response.json(data);
+
+    return Response.json(applicants);
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }
@@ -22,7 +22,6 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    await connectDB();
     const body = await request.json();
     const { cccd, hoTen, ngaySinh, soDienThoai, email, chiBoDangBo } = body;
 
@@ -31,14 +30,17 @@ export async function POST(request) {
     }
 
     // Check duplicate CCCD
-    const existing = await Applicant.findOne({ cccd });
+    const existing = await prisma.applicant.findUnique({ where: { cccd } });
     if (existing) {
       return Response.json({ error: `CCCD ${cccd} đã tồn tại trong hệ thống!` }, { status: 400 });
     }
 
     // Get process templates for initial steps
-    const templates = await ProcessTemplate.find({}).sort({ soThuTu: 1 }).lean();
-    const quyTrinh = templates.map(t => ({
+    const templates = await prisma.processTemplate.findMany({
+      orderBy: { soThuTu: 'asc' }
+    });
+    
+    const quyTrinhData = templates.map(t => ({
       soThuTu: t.soThuTu,
       tenQuyTrinh: t.tenQuyTrinh,
       trangThai: 'chua_bat_dau',
@@ -49,13 +51,22 @@ export async function POST(request) {
       lyDoTuChoi: '',
     }));
 
-    const applicant = await Applicant.create({
-      cccd, hoTen, ngaySinh, soDienThoai: soDienThoai || '', email: email || '', chiBoDangBo,
-      ngayTao: new Date().toISOString().slice(0, 10),
-      quyTrinh,
+    const applicant = await prisma.applicant.create({
+      data: {
+        cccd, hoTen, ngaySinh, soDienThoai: soDienThoai || '', email: email || '', chiBoDangBo,
+        ngayTao: new Date().toISOString().slice(0, 10),
+        quyTrinh: {
+          create: quyTrinhData
+        }
+      },
+      include: {
+        quyTrinh: {
+          orderBy: { soThuTu: 'asc' }
+        }
+      }
     });
 
-    return Response.json({ ...applicant.toObject(), id: applicant._id.toString() }, { status: 201 });
+    return Response.json(applicant, { status: 201 });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }
