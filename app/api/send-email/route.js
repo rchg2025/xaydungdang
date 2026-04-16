@@ -39,7 +39,7 @@ export async function POST(request) {
 
     // Send mail
     const mailOptions = {
-      from: `"Hệ Thống Kết Nạp Đảng" <${gmailUser}>`,
+      from: `"Hệ Thống Tiếp Nhận Và Xử Lý Hồ Sơ Kết Nạp Đảng" <${gmailUser}>`,
       to: to,
       subject: subject,
       text: message,

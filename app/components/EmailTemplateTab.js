@@ -10,7 +10,7 @@ import {
   TEMPLATE_TYPES,
   TEMPLATE_LABELS,
   TEMPLATE_VARIABLES,
-  processTemplate,
+  processTemplateData,
 } from '../lib/emailTemplateStore';
 import { testEmailConnection } from '../lib/emailService';
 
@@ -18,7 +18,7 @@ import { testEmailConnection } from '../lib/emailService';
 // Email Template Tab Component (Admin only)
 // =============================================
 export default function EmailTemplateTab({ onAlert }) {
-  const [activeType, setActiveType] = useState(TEMPLATE_TYPES.KET_NAP);
+  const [activeType, setActiveType] = useState(TEMPLATE_TYPES.HOAN_THANH);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [showPreview, setShowPreview] = useState(false);
@@ -83,7 +83,7 @@ export default function EmailTemplateTab({ onAlert }) {
   };
 
   // ---- Preview data ----
-  const previewData = processTemplate(activeType, {
+  const previewData = processTemplateData({ subject, body }, {
     hoTen: 'Nguyễn Văn An',
     cccd: '079201001234',
     chiBo: 'Chi bộ Trường THPT Nguyễn Trãi',

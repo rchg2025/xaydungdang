@@ -5,22 +5,15 @@
 const TEMPLATE_KEY = 'xaydungdang_email_templates';
 const EMAILJS_CONFIG_KEY = 'xaydungdang_emailjs_config';
 
-// ---- Template types ----
 export const TEMPLATE_TYPES = {
-  KET_NAP: 'ket_nap',
-  DU_BI: 'du_bi',
   HOAN_THANH: 'hoan_thanh',
   HUY_HO_SO: 'huy_ho_so',
-  THONG_BAO: 'thong_bao',
   CAP_NHAT_BUOC: 'cap_nhat_buoc',
 };
 
 export const TEMPLATE_LABELS = {
-  ket_nap: '📋 Thông báo Kết nạp',
-  du_bi: '⏳ Thông báo Đảng viên Dự bị',
   hoan_thanh: '✅ Thông báo Hoàn thành',
   huy_ho_so: '❌ Thông báo Hủy hồ sơ',
-  thong_bao: '📢 Thông báo chung',
   cap_nhat_buoc: '🔔 Cập nhật Bước → Chi bộ',
 };
 
@@ -39,31 +32,6 @@ export const TEMPLATE_VARIABLES = [
 
 // ---- Defaults ----
 const DEFAULT_TEMPLATES = {
-  ket_nap: {
-    subject: 'Thông báo tiến trình Kết nạp Đảng - {{hoTen}}',
-    body: `Kính gửi {{hoTen}},
-
-Hệ thống tiếp nhận và xử lý hồ sơ Kết nạp Đảng xin thông báo:
-
-Hồ sơ của bạn tại {{chiBo}} đang được xử lý.
-- Bước hiện tại: {{buocHienTai}}/{{tongBuoc}}
-
-Vui lòng liên hệ Chi bộ/Đảng bộ cơ sở để biết thêm chi tiết.
-
-Trân trọng,
-{{nguoiGui}}`,
-  },
-  du_bi: {
-    subject: 'Thông báo Đảng viên Dự bị - {{hoTen}}',
-    body: `Kính gửi {{hoTen}},
-
-Chúc mừng bạn đã được công nhận là Đảng viên Dự bị tại {{chiBo}}.
-
-Bạn cần tiếp tục phấn đấu, rèn luyện trong thời gian dự bị 12 tháng.
-
-Trân trọng,
-{{nguoiGui}}`,
-  },
   hoan_thanh: {
     subject: 'Chúc mừng hoàn thành quy trình - {{hoTen}}',
     body: `Kính gửi {{hoTen}},
@@ -84,20 +52,11 @@ Vui lòng liên hệ Chi bộ/Đảng bộ cơ sở để biết thêm chi tiế
 Trân trọng,
 {{nguoiGui}}`,
   },
-  thong_bao: {
-    subject: 'Thông báo từ Hệ thống Kết nạp Đảng',
-    body: `Kính gửi {{hoTen}},
-
-Đây là thông báo từ Hệ thống tiếp nhận và xử lý hồ sơ Kết nạp Đảng.
-
-Trân trọng,
-{{nguoiGui}}`,
-  },
   cap_nhat_buoc: {
     subject: '[Cập nhật Hồ sơ] {{hoTen}} - Bước {{buocHienTai}}: {{tenBuoc}}',
     body: `Kính gửi {{chiBo}},
 
-Hệ thống tiếp nhận và xử lý hồ sơ Kết nạp Đảng xin thông báo:
+Hệ thống Tiếp nhận và Xử lý hồ sơ Kết nạp Đảng xin thông báo:
 
 Hồ sơ quần chúng vừa được cập nhật trạng thái:
 
@@ -112,55 +71,16 @@ Hồ sơ quần chúng vừa được cập nhật trạng thái:
 Vui lòng kiểm tra hệ thống để biết thêm chi tiết.
 
 Trân trọng,
-Hệ thống tiếp nhận và xử lý hồ sơ xin kết nạp Đảng`,
+Hệ thống Tiếp nhận và Xử lý hồ sơ Kết nạp Đảng`,
   },
 };
 
 // =============================================
 // TEMPLATE CRUD
 // =============================================
-function getTemplatesRaw() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(TEMPLATE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-export function getTemplates() {
-  const stored = getTemplatesRaw();
-  if (!stored) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(TEMPLATE_KEY, JSON.stringify(DEFAULT_TEMPLATES));
-    }
-    return { ...DEFAULT_TEMPLATES };
-  }
-  // Merge with defaults in case new types were added
-  return { ...DEFAULT_TEMPLATES, ...stored };
-}
-
 export function getTemplate(type) {
-  const templates = getTemplates();
-  return templates[type] || DEFAULT_TEMPLATES.thong_bao;
-}
-
-export function saveTemplate(type, { subject, body }) {
-  if (!subject || !subject.trim()) throw new Error('Tiêu đề không được để trống!');
-  if (!body || !body.trim()) throw new Error('Nội dung không được để trống!');
-
-  const templates = getTemplates();
-  templates[type] = { subject: subject.trim(), body: body.trim() };
-  localStorage.setItem(TEMPLATE_KEY, JSON.stringify(templates));
-  return templates;
-}
-
-export function resetTemplate(type) {
-  const templates = getTemplates();
-  templates[type] = DEFAULT_TEMPLATES[type] || DEFAULT_TEMPLATES.thong_bao;
-  localStorage.setItem(TEMPLATE_KEY, JSON.stringify(templates));
-  return templates;
+  // Use DEFAULT_TEMPLATES as fallback if we wanted, but not really needed here since UI loads from API now.
+  return DEFAULT_TEMPLATES[type] || DEFAULT_TEMPLATES.hoan_thanh;
 }
 
 // =============================================
