@@ -132,6 +132,10 @@ export async function deleteProcessTemplate(soThuTu) {
   return apiFetch(`${API}/process-templates`, { method: 'DELETE', body: JSON.stringify({ soThuTu }) });
 }
 
+export async function syncProcessTemplatesWithApplicants() {
+  return apiFetch(`${API}/process-templates/sync`, { method: 'POST' });
+}
+
 // =============================================
 // EMAIL TEMPLATES
 // =============================================

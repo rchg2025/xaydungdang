@@ -11,6 +11,7 @@ import {
   renameProcessTemplate,
   deleteProcessTemplate,
   updateProcessTemplatesOrder,
+  syncProcessTemplatesWithApplicants,
 } from '../lib/apiClient';
 
 // =============================================
@@ -254,11 +255,18 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
               )}
               <button
                 className="btn btn-secondary btn-sm"
-                onClick={() => {
-                  syncAllApplicantsWithTemplate();
-                  loadSteps();
-                  if (onReload) onReload();
-                  onAlert({ type: 'success', message: 'Đã đồng bộ tất cả hồ sơ theo danh mục hiện tại!' });
+                onClick={async () => {
+                  const conf = window.confirm('Quá trình này sẽ đồng bộ toàn bộ tên và thứ tự của mẫu vào TẤT CẢ hồ sơ, đồng thời xóa các bước thừa. Bạn có chắc chắn?');
+                  if (!conf) return;
+                  try {
+                    onAlert({ type: 'info', message: '⏳ Đang đồng bộ hóa tất cả hồ sơ, vui lòng đợi...' });
+                    await syncProcessTemplatesWithApplicants();
+                    loadSteps();
+                    if (onReload) onReload();
+                    onAlert({ type: 'success', message: '✅ Đã đồng bộ tất cả hồ sơ theo danh mục mẫu thành công!' });
+                  } catch (err) {
+                    onAlert({ type: 'error', message: 'Lỗi đồng bộ: ' + err.message });
+                  }
                 }}
                 title="Đồng bộ ngay toàn bộ hồ sơ theo danh mục"
               >
