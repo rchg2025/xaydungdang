@@ -13,6 +13,20 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [editingStep, setEditingStep] = useState(null); // { applicantId, soThuTu, value, lyDo }
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Trạng thái tổng thể của 1 hồ sơ
+  const getApplicantStatus = (a) => {
+    const hasHuy = a.quyTrinh.some(s => s.trangThai === STATUSES.HUY_HO_SO);
+    if (hasHuy) return 'huy_ho_so';
+    const allDone = a.quyTrinh.every(s => s.trangThai === STATUSES.DA_NHAN_PHAN_HOI);
+    if (allDone) return 'hoan_thanh';
+    const hasDang = a.quyTrinh.some(s => s.trangThai === STATUSES.DANG_XU_LY);
+    if (hasDang) return 'dang_xu_ly';
+    const hasGui = a.quyTrinh.some(s => s.trangThai === STATUSES.DA_GUI);
+    if (hasGui) return 'da_gui';
+    return 'cho_xu_ly';
+  };
 
   // Sort newest first + filter
   const sorted = [...applicants].sort((a, b) => new Date(b.ngayTao) - new Date(a.ngayTao));
@@ -23,30 +37,34 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
   });
 
   const handleUpdateStep = async (applicantId, soThuTu, trangThai, lyDo = '') => {
+    setIsUpdating(true);
     try {
       const ghiChu = trangThai === STATUSES.HUY_HO_SO && lyDo.trim()
         ? `Lý do từ chối: ${lyDo.trim()}`
         : lyDo.trim();
-      await updateProcessStepAPI(applicantId, soThuTu, trangThai, ghiChu, currentUser?.hoTen || '');
+      const updatedApplicant = await updateProcessStepAPI(applicantId, soThuTu, trangThai, ghiChu, currentUser?.hoTen || '');
       
-      // Send email notification dynamically
-      try {
-        const applicant = applicants.find(a => a.id === applicantId);
-        if (applicant) {
-          const stepObj = applicant.quyTrinh.find(s => s.soThuTu === soThuTu);
-          if (stepObj) {
-            await sendChiBoStatusNotification(applicant, { soThuTu, tenQuyTrinh: stepObj.tenQuyTrinh }, STATUS_LABELS[trangThai], currentUser?.hoTen || '');
-          }
-        }
-      } catch (emailErr) {
-        console.error('Email failed: ', emailErr);
-        // ignore email err to keep the UI smooth
-      }
-
-      onReload();
+      // Update local state instantly and hide input
       onAlert({ type: 'success', message: `Đã cập nhật bước ${soThuTu}!` });
       setEditingStep(null);
+      setIsUpdating(false);
+      onReload(); // reload parent
+      
+      // Send email notification dynamically IN THE BACKGROUND (without await)
+      const stepObj = updatedApplicant.quyTrinh.find(s => s.soThuTu === soThuTu);
+      if (stepObj) {
+        const overallStatus = getApplicantStatus(updatedApplicant);
+        sendChiBoStatusNotification(
+            updatedApplicant, 
+            { soThuTu, tenQuyTrinh: stepObj.tenQuyTrinh }, 
+            STATUS_LABELS[trangThai], 
+            currentUser?.hoTen || '', 
+            overallStatus
+        ).catch(emailErr => console.error('Email failed: ', emailErr));
+      }
+
     } catch (err) {
+      setIsUpdating(false);
       onAlert({ type: 'error', message: err.message });
     }
   };
@@ -171,8 +189,10 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
                               <button
                                 className="btn btn-sm btn-primary"
                                 onClick={() => handleUpdateStep(a.id, s.soThuTu, editingStep.value, editingStep.lyDo || '')}
-                                disabled={editingStep.value === STATUSES.HUY_HO_SO && !editingStep.lyDo?.trim()}
-                              >✓ Xác nhận</button>
+                                disabled={isUpdating || (editingStep.value === STATUSES.HUY_HO_SO && !editingStep.lyDo?.trim())}
+                              >
+                                {isUpdating ? '⏳' : '✓'} Xác nhận
+                              </button>
                               <button
                                 className="btn btn-sm btn-secondary"
                                 onClick={() => setEditingStep(null)}
