@@ -442,6 +442,8 @@ input, select, textarea, button {
   margin-bottom: 1.5rem;
   transition: all var(--transition-normal);
   animation: fadeInUp 0.4s ease;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
 }
 
 .applicant-card:hover {

@@ -6,8 +6,10 @@ export async function GET() {
   try {
     await seedDatabase();
     const all = await prisma.applicant.findMany({
-      include: {
-        quyTrinh: true
+      select: {
+        quyTrinh: {
+          select: { trangThai: true }
+        }
       }
     });
 

@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   fetchApplicants,
-  fetchStats,
   fetchChiBoList,
   fetchUsers,
   loginAPI,
@@ -63,14 +62,27 @@ export default function AdminPage() {
   // ---- Load data ----
   const loadData = useCallback(async () => {
     try {
-      const [apps, st, cb] = await Promise.all([
+      const [apps, cb] = await Promise.all([
         fetchApplicants(),
-        fetchStats(),
         fetchChiBoList(),
       ]);
       setApplicants(apps);
-      setStats(st);
       setChiBoList(cb);
+
+      // Tính toán trực tiếp không cần gọi thêm API mạng 
+      const tongSo = apps.length;
+      let dangXuLy = 0, daHoanThanh = 0, choXuLy = 0, daHuy = 0;
+      apps.forEach(a => {
+        const hasHuy = a.quyTrinh.some(s => s.trangThai === 'huy_ho_so');
+        if (hasHuy) { daHuy++; return; }
+        const allDone = a.quyTrinh.every(s => s.trangThai === 'da_nhan_phan_hoi');
+        if (allDone) { daHoanThanh++; return; }
+        const hasDang = a.quyTrinh.some(s => s.trangThai === 'dang_xu_ly' || s.trangThai === 'da_gui');
+        if (hasDang) { dangXuLy++; return; }
+        choXuLy++;
+      });
+      setStats({ tongSo, dangXuLy, daHoanThanh, choXuLy, daHuy });
+
     } catch (err) {
       console.error('Load data error:', err);
     }

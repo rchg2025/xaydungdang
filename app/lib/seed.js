@@ -26,10 +26,17 @@ const DEFAULT_STEPS = [
   { soThuTu: 10, tenQuyTrinh: 'Công nhận Đảng viên chính thức' },
 ];
 
+let isSeeded = false;
+
 export async function seedDatabase() {
+  if (isSeeded) return;
+
   // Kiểm tra đã seed chưa — nếu rồi thì bỏ qua
   const flag = await prisma.seedFlag.findUnique({ where: { key: 'initial_seed' } });
-  if (flag?.seeded) return;
+  if (flag?.seeded) {
+    isSeeded = true;
+    return;
+  }
 
   // Seed admin user if no users exist
   const userCount = await prisma.user.count();
@@ -51,5 +58,6 @@ export async function seedDatabase() {
     update: { seeded: true },
     create: { key: 'initial_seed', seeded: true },
   });
+  isSeeded = true;
   console.log('[Seed] Database initialized');
 }
