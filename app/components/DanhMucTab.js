@@ -29,6 +29,7 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
   const [draggedItemIdx, setDraggedItemIdx] = useState(null);
   const [dragOverItemIdx, setDragOverItemIdx] = useState(null);
   const [hasOrderChanged, setHasOrderChanged] = useState(false);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
 
   // ---- Chi bộ state ----
   const [chiBoList, setChiBoList] = useState([]);
@@ -129,6 +130,7 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
 
   const handleSaveOrder = async () => {
     try {
+      setIsSavingOrder(true);
       const orderedTemplates = steps.map((s, idx) => ({
         id: s.id,
         oldThuTu: s.soThuTu,
@@ -141,6 +143,8 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
       if (onReload) onReload();
     } catch (err) {
       onAlert({ type: 'error', message: err.message });
+    } finally {
+      setIsSavingOrder(false);
     }
   };
 
@@ -241,10 +245,11 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
                 <button
                   className="btn btn-primary btn-sm"
                   onClick={handleSaveOrder}
+                  disabled={isSavingOrder}
                   title="Lưu lại thứ tự các bước vừa thay đổi"
-                  style={{ animation: 'pulse 2s infinite' }}
+                  style={{ animation: isSavingOrder ? 'none' : 'pulse 2s infinite', opacity: isSavingOrder ? 0.7 : 1 }}
                 >
-                  💾 Lưu thứ tự mới
+                  {isSavingOrder ? '⏳ Đang lưu đồng bộ...' : '💾 Lưu thứ tự mới'}
                 </button>
               )}
               <button
