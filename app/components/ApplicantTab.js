@@ -62,6 +62,7 @@ function Paginator({ page, total, onPage, totalItems }) {
 export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, currentUser, onAlert, onReload }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [chiBoSearch, setChiBoSearch] = useState('');
+  const [showChiBoDropdown, setShowChiBoDropdown] = useState(false);
   const [page, setPage] = useState(1);
 
   // ---- Bộ lọc mới ----
@@ -139,7 +140,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
   const openEdit = (a) => {
     setEditingApplicant(a);
     setFormData({ cccd: a.cccd, hoTen: a.hoTen, ngaySinh: a.ngaySinh, soDienThoai: a.soDienThoai, email: a.email, chiBoDangBo: a.chiBoDangBo });
-    setChiBoSearch('');
+    setChiBoSearch(a.chiBoDangBo);
     setShowApplicantModal(true);
   };
 
@@ -457,23 +458,69 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
                   <input type="email" className="form-input"
                     value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" />
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ position: 'relative' }}>
                   <label>Chi bộ / Đảng bộ *</label>
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="🔍 Nhập từ khóa để lọc nhanh chi bộ..."
+                    placeholder="-- Nhập hoặc chọn chi bộ/đảng bộ --"
+                    required
                     value={chiBoSearch}
-                    onChange={e => setChiBoSearch(e.target.value)}
-                    style={{ marginBottom: '8px', background: 'var(--color-surface)' }}
+                    onFocus={() => setShowChiBoDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowChiBoDropdown(false), 200)}
+                    onChange={e => {
+                      setChiBoSearch(e.target.value);
+                      setFormData({ ...formData, chiBoDangBo: e.target.value });
+                      setShowChiBoDropdown(true);
+                    }}
                   />
-                  <select className="form-select" required
-                    value={formData.chiBoDangBo} onChange={e => setFormData({ ...formData, chiBoDangBo: e.target.value })}>
-                    <option value="">-- Chọn chi bộ / đảng bộ --</option>
-                    {chiBoList
-                      .filter(cb => cb.ten.toLowerCase().includes(chiBoSearch.toLowerCase()))
-                      .map(cb => <option key={cb.ten} value={cb.ten}>{cb.ten}</option>)}
-                  </select>
+                  {showChiBoDropdown && (
+                    <ul style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      background: 'var(--color-surface)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 'var(--radius-sm)',
+                      boxShadow: 'var(--shadow-md)',
+                      zIndex: 99,
+                      listStyle: 'none',
+                      margin: '4px 0 0 0',
+                      padding: 0
+                    }}>
+                      {chiBoList
+                        .filter(cb => cb.ten.toLowerCase().includes(chiBoSearch.toLowerCase()))
+                        .map(cb => (
+                          <li
+                            key={cb.ten}
+                            style={{
+                              padding: '10px 14px',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid rgba(255,255,255,0.05)',
+                              fontSize: 'var(--text-base)',
+                              color: 'var(--color-text-primary)'
+                            }}
+                            onMouseDown={(e) => {
+                              // Prevent onBlur from firing before click
+                              e.preventDefault(); 
+                              setChiBoSearch(cb.ten);
+                              setFormData({ ...formData, chiBoDangBo: cb.ten });
+                              setShowChiBoDropdown(false);
+                            }}
+                            onMouseEnter={e => e.target.style.background = 'var(--color-surface-hover)'}
+                            onMouseLeave={e => e.target.style.background = 'transparent'}
+                          >
+                            {cb.ten}
+                          </li>
+                        ))}
+                      {chiBoList.filter(cb => cb.ten.toLowerCase().includes(chiBoSearch.toLowerCase())).length === 0 && (
+                        <li style={{ padding: '10px 14px', color: 'var(--color-text-muted)' }}>Không tìm thấy...</li>
+                      )}
+                    </ul>
+                  )}
                 </div>
               </div>
               <div className="modal-footer">
