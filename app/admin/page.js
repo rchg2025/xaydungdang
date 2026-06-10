@@ -71,6 +71,48 @@ export default function AdminPage() {
   const [chiBoList, setChiBoList] = useState([]);
   const [alert, setAlert] = useState(null);
 
+  // Profile Modal
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ hoTen: '', email: '', password: '' });
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  const openProfile = () => {
+    setProfileForm({
+      hoTen: currentUser.hoTen || '',
+      email: currentUser.email || '',
+      password: ''
+    });
+    setShowProfile(true);
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setProfileLoading(true);
+    try {
+      const payload = { hoTen: profileForm.hoTen, email: profileForm.email };
+      if (profileForm.password) payload.password = profileForm.password;
+      
+      const res = await fetch(`/api/db/users/${currentUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Lỗi cập nhật');
+      }
+      const updatedUser = await res.json();
+      saveSession(updatedUser);
+      setCurrentUser(updatedUser);
+      setAlert({ type: 'success', message: 'Cập nhật thông tin thành công!' });
+      setShowProfile(false);
+    } catch (err) {
+      setAlert({ type: 'error', message: err.message });
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
   // ---- Init ----
   useEffect(() => {
     const user = getCurrentUser();
@@ -564,12 +606,17 @@ export default function AdminPage() {
           <nav className="header-nav">
             <Link href="/" className="header-nav-link">🔍 Tra cứu</Link>
             <Link href="/admin" className="header-nav-link active">🔐 Quản trị</Link>
-            <div className="user-session-badge">
+            <div 
+              className="user-session-badge" 
+              onClick={openProfile} 
+              style={{ cursor: 'pointer' }}
+              title="Cập nhật thông tin cá nhân"
+            >
               <div className={`user-avatar user-avatar-${currentUser.role}`}>
                 {(currentUser.hoTen || currentUser.username || 'U').charAt(0).toUpperCase()}
               </div>
               <div className="user-session-info">
-                <span className="user-session-name">{currentUser.hoTen}</span>
+                <span className="user-session-name" style={{ textDecoration: 'underline', textDecorationColor: 'rgba(255,255,255,0.3)' }}>{currentUser.hoTen || currentUser.username}</span>
                 <span className={`role-badge-sm role-${currentUser.role}`}>
                   {userIsAdmin ? '👑' : '✏️'} {ROLE_LABELS[currentUser.role]}
                 </span>
@@ -639,6 +686,65 @@ export default function AdminPage() {
         )}
         {activeTab === 'email' && userIsAdmin && (
           <EmailTemplateTab onAlert={setAlert} />
+        )}
+
+        {/* ====== PROFILE MODAL ====== */}
+        {showProfile && (
+          <div className="modal-overlay">
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>👤 Thông tin cá nhân</h3>
+                <button className="modal-close" onClick={() => setShowProfile(false)}>✕</button>
+              </div>
+              <form onSubmit={handleUpdateProfile}>
+                <div className="modal-body">
+                  <div className="form-group">
+                    <label>Tên đăng nhập</label>
+                    <input type="text" className="form-input" disabled value={currentUser.username} />
+                  </div>
+                  <div className="form-group">
+                    <label>Vai trò</label>
+                    <input type="text" className="form-input" disabled value={ROLE_LABELS[currentUser.role]} />
+                  </div>
+                  {isThanhVien && (
+                    <div className="form-group">
+                      <label>Chi bộ / Đảng bộ</label>
+                      <input type="text" className="form-input" disabled value={currentUser.chiBoDangBo} />
+                    </div>
+                  )}
+                  <div className="form-group">
+                    <label>Họ tên *</label>
+                    <input type="text" className="form-input" required 
+                      value={profileForm.hoTen} 
+                      onChange={e => setProfileForm({ ...profileForm, hoTen: e.target.value })} 
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Email liên hệ</label>
+                    <input type="email" className="form-input" 
+                      value={profileForm.email} 
+                      onChange={e => setProfileForm({ ...profileForm, email: e.target.value })} 
+                      placeholder="Dùng để nhận thông báo"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Đổi mật khẩu mới (Bỏ trống nếu không đổi)</label>
+                    <input type="password" className="form-input" 
+                      value={profileForm.password} 
+                      onChange={e => setProfileForm({ ...profileForm, password: e.target.value })} 
+                      placeholder="Nhập mật khẩu mới..."
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowProfile(false)}>Hủy</button>
+                  <button type="submit" className="btn btn-primary" disabled={profileLoading}>
+                    {profileLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
 
         {/* Footer */}
