@@ -26,6 +26,7 @@ import DanhMucTab from '../components/DanhMucTab';
 import UserManagementTab from '../components/UserManagementTab';
 import EmailTemplateTab from '../components/EmailTemplateTab';
 import DriveTab from '../components/DriveTab';
+import ReportTab from '../components/ReportTab';
 
 // =============================================
 // Admin Page — Auth shell + Tab routing
@@ -682,6 +683,7 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="tabs">
           <button className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => changeTab('dashboard')} id="tab-dashboard">📊 Tổng quan</button>
+          <button className={`tab-btn ${activeTab === 'report' ? 'active' : ''}`} onClick={() => changeTab('report')} id="tab-report">📈 Báo cáo - Thống kê</button>
           <button className={`tab-btn ${activeTab === 'applicants' ? 'active' : ''}`} onClick={() => changeTab('applicants')} id="tab-applicants">👥 Danh sách Quần chúng</button>
           {!isThanhVien && (
             <>
@@ -701,6 +703,9 @@ export default function AdminPage() {
         {/* Tab content */}
         {activeTab === 'dashboard' && (
           <DashboardTab applicants={applicants} stats={stats} />
+        )}
+        {activeTab === 'report' && (
+          <ReportTab applicants={applicants} chiBoList={chiBoList} currentUser={currentUser} />
         )}
         {activeTab === 'applicants' && (
           <ApplicantTab
