@@ -37,6 +37,22 @@ export default function AdminPage() {
   const [showForgotPwd, setShowForgotPwd] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  // Sync tab with URL hash
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash) setActiveTab(hash);
+    };
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const changeTab = (tab) => {
+    window.location.hash = tab;
+    setActiveTab(tab);
+  };
+
   // Forgot password OTP flow
   const [otpStep, setOtpStep] = useState(1); // 1=email, 2=otp, 3=newpwd
   const [fpEmail, setFpEmail] = useState('');
@@ -122,7 +138,7 @@ export default function AdminPage() {
     setCurrentUser(null);
     setUsernameInput('');
     setPasswordInput('');
-    setActiveTab('dashboard');
+    changeTab('dashboard');
   };
 
   // ---- Forgot password handlers ----
@@ -575,14 +591,14 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="tabs">
-          <button className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')} id="tab-dashboard">📊 Tổng quan</button>
-          <button className={`tab-btn ${activeTab === 'applicants' ? 'active' : ''}`} onClick={() => setActiveTab('applicants')} id="tab-applicants">👥 Quần chúng</button>
-          <button className={`tab-btn ${activeTab === 'processes' ? 'active' : ''}`} onClick={() => setActiveTab('processes')} id="tab-processes">📋 Quy trình</button>
+          <button className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => changeTab('dashboard')} id="tab-dashboard">📊 Tổng quan</button>
+          <button className={`tab-btn ${activeTab === 'applicants' ? 'active' : ''}`} onClick={() => changeTab('applicants')} id="tab-applicants">👥 Quần chúng</button>
+          <button className={`tab-btn ${activeTab === 'processes' ? 'active' : ''}`} onClick={() => changeTab('processes')} id="tab-processes">📋 Quy trình</button>
           {userIsAdmin && (
             <>
-              <button className={`tab-btn ${activeTab === 'danhmuc' ? 'active' : ''}`} onClick={() => setActiveTab('danhmuc')} id="tab-danhmuc">🗂️ Danh mục</button>
-              <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')} id="tab-users">👤 Thành viên</button>
-              <button className={`tab-btn ${activeTab === 'email' ? 'active' : ''}`} onClick={() => setActiveTab('email')} id="tab-email">📧 Email</button>
+              <button className={`tab-btn ${activeTab === 'danhmuc' ? 'active' : ''}`} onClick={() => changeTab('danhmuc')} id="tab-danhmuc">🗂️ Danh mục</button>
+              <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => changeTab('users')} id="tab-users">👤 Thành viên</button>
+              <button className={`tab-btn ${activeTab === 'email' ? 'active' : ''}`} onClick={() => changeTab('email')} id="tab-email">📧 Email</button>
             </>
           )}
         </div>
