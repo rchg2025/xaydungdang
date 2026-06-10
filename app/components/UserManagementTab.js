@@ -56,6 +56,39 @@ export default function UserManagementTab({ onAlert, currentUser, chiBoList = []
     e.preventDefault();
     try {
       await createUser(formData);
+
+      // Gửi email thông báo tài khoản
+      if (formData.email) {
+        try {
+          const loginUrl = window.location.origin;
+          await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: formData.email.trim(),
+              toName: formData.hoTen,
+              subject: 'THÔNG BÁO TẠO TÀI KHOẢN MỚI - HỆ THỐNG XÂY DỰNG ĐẢNG',
+              message: `Kính gửi ${formData.hoTen},
+
+Tài khoản truy cập Hệ thống Quản lý và Tiếp nhận hồ sơ Xây dựng Đảng của bạn đã được tạo thành công.
+
+Dưới đây là thông tin đăng nhập của bạn:
+- Tên đăng nhập: ${formData.username}
+- Mật khẩu: ${formData.password}
+- Vai trò: ${ROLE_LABELS[formData.role]}
+${formData.chiBoDangBo ? `- Chi bộ/Đảng bộ quản lý: ${formData.chiBoDangBo}\n` : ''}- Đường dẫn truy cập: ${loginUrl}
+
+Vui lòng đăng nhập vào hệ thống để bắt đầu công việc. (Bạn có thể đổi mật khẩu nếu cần thiết).
+
+Trân trọng,
+Quản trị viên Hệ thống`
+            })
+          });
+        } catch (emailErr) {
+          console.error("Lỗi gửi email tạo tài khoản:", emailErr);
+        }
+      }
+
       await loadUsers();
       setShowAddModal(false);
       setFormData({ username: '', hoTen: '', email: '', role: ROLES.BIEN_TAP_VIEN, password: '', chiBoDangBo: '' });
