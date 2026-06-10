@@ -99,8 +99,9 @@ export default function DashboardTab({ applicants, stats }) {
             {pageItems.map((a, i) => {
               const step = getCurrentStep(a);
               const isCancelled = step === -1;
+              const quyTrinh = a.quyTrinh || [];
               const currentStepObj = !isCancelled
-                ? a.quyTrinh.find(s => s.soThuTu === step + 1) || a.quyTrinh[step]
+                ? quyTrinh.find(s => s.soThuTu === step + 1) || quyTrinh[step]
                 : null;
 
               return (
@@ -122,7 +123,7 @@ export default function DashboardTab({ applicants, stats }) {
                       <span className="status-badge status-huy_ho_so">✕ Hồ sơ bị từ chối</span>
                     ) : (
                       <span className="status-badge status-dang_xu_ly">
-                        Bước {step}/{a.quyTrinh.length}
+                        Bước {step}/{(a.quyTrinh || []).length}
                       </span>
                     )}
                   </td>

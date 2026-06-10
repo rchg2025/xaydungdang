@@ -440,7 +440,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
                         ) : (
                           <div className="step-progress-cell">
                             <span className="status-badge status-dang_xu_ly">
-                              Bước {stepInfo?.num || step}/{a.quyTrinh.length}
+                              Bước {stepInfo?.num || step}/{(a.quyTrinh || []).length}
                             </span>
                             {stepInfo && (
                               <span className="step-name-label" title={stepInfo.name}>

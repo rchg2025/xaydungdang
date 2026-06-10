@@ -17,13 +17,14 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
 
   // Trạng thái tổng thể của 1 hồ sơ
   const getApplicantStatus = (a) => {
-    const hasHuy = a.quyTrinh.some(s => s.trangThai === STATUSES.HUY_HO_SO);
+    const quyTrinh = a.quyTrinh || [];
+    const hasHuy = quyTrinh.some(s => s.trangThai === STATUSES.HUY_HO_SO);
     if (hasHuy) return 'huy_ho_so';
-    const allDone = a.quyTrinh.every(s => s.trangThai === STATUSES.DA_NHAN_PHAN_HOI);
+    const allDone = quyTrinh.length > 0 && quyTrinh.every(s => s.trangThai === STATUSES.DA_NHAN_PHAN_HOI);
     if (allDone) return 'hoan_thanh';
-    const hasDang = a.quyTrinh.some(s => s.trangThai === STATUSES.DANG_XU_LY);
+    const hasDang = quyTrinh.some(s => s.trangThai === STATUSES.DANG_XU_LY);
     if (hasDang) return 'dang_xu_ly';
-    const hasGui = a.quyTrinh.some(s => s.trangThai === STATUSES.DA_GUI);
+    const hasGui = quyTrinh.some(s => s.trangThai === STATUSES.DA_GUI);
     if (hasGui) return 'da_gui';
     return 'cho_xu_ly';
   };
@@ -51,7 +52,7 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
       onReload(); // reload parent
       
       // Send email notification dynamically IN THE BACKGROUND (without await)
-      const stepObj = updatedApplicant.quyTrinh.find(s => s.soThuTu === soThuTu);
+      const stepObj = (updatedApplicant.quyTrinh || []).find(s => s.soThuTu === soThuTu);
       if (stepObj) {
         const overallStatus = getApplicantStatus(updatedApplicant);
         sendChiBoStatusNotification(
@@ -70,8 +71,10 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
   };
 
   const getProgressPercent = (a) => {
-    const completed = a.quyTrinh.filter(s => s.trangThai === STATUSES.DA_NHAN_PHAN_HOI).length;
-    return Math.round((completed / a.quyTrinh.length) * 100);
+    const quyTrinh = a.quyTrinh || [];
+    if (quyTrinh.length === 0) return 0;
+    const completed = quyTrinh.filter(s => s.trangThai === STATUSES.DA_NHAN_PHAN_HOI).length;
+    return Math.round((completed / quyTrinh.length) * 100);
   };
 
   if (filtered.length === 0) {
@@ -122,7 +125,7 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
                     {isCancelled ? (
                       <span className="status-badge status-huy_ho_so">✕ Hồ sơ bị từ chối</span>
                     ) : (
-                      <span className="status-badge status-dang_xu_ly">Bước {step}/{a.quyTrinh.length} · {progress}%</span>
+                      <span className="status-badge status-dang_xu_ly">Bước {step}/{(a.quyTrinh || []).length} · {progress}%</span>
                     )}
                   </div>
                 </div>
@@ -147,7 +150,7 @@ export default function ProcessesTab({ applicants, userIsAdmin, currentUser, onA
               {/* Expanded steps */}
               {isExpanded && (
                 <div className="process-card-steps">
-                  {a.quyTrinh.map(s => {
+                  {(a.quyTrinh || []).map(s => {
                     const isEditing = editingStep?.applicantId === a.id && editingStep?.soThuTu === s.soThuTu;
                     return (
                       <div key={s.soThuTu} className={`process-step-row process-step-${s.trangThai}`}>
