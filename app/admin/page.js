@@ -25,6 +25,7 @@ import ProcessesTab from '../components/ProcessesTab';
 import DanhMucTab from '../components/DanhMucTab';
 import UserManagementTab from '../components/UserManagementTab';
 import EmailTemplateTab from '../components/EmailTemplateTab';
+import DriveTab from '../components/DriveTab';
 
 // =============================================
 // Admin Page — Auth shell + Tab routing
@@ -73,13 +74,14 @@ export default function AdminPage() {
 
   // Profile Modal
   const [showProfile, setShowProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ hoTen: '', email: '', password: '' });
+  const [profileForm, setProfileForm] = useState({ hoTen: '', email: '', soDienThoai: '', password: '' });
   const [profileLoading, setProfileLoading] = useState(false);
 
   const openProfile = () => {
     setProfileForm({
       hoTen: currentUser.hoTen || '',
       email: currentUser.email || '',
+      soDienThoai: currentUser.soDienThoai || '',
       password: ''
     });
     setShowProfile(true);
@@ -89,7 +91,11 @@ export default function AdminPage() {
     e.preventDefault();
     setProfileLoading(true);
     try {
-      const payload = { hoTen: profileForm.hoTen, email: profileForm.email };
+      const payload = { 
+        hoTen: profileForm.hoTen, 
+        email: profileForm.email,
+        soDienThoai: profileForm.soDienThoai
+      };
       if (profileForm.password) payload.password = profileForm.password;
       
       const res = await fetch(`/api/db/users/${currentUser.id}`, {
@@ -649,6 +655,7 @@ export default function AdminPage() {
                   <button className={`tab-btn ${activeTab === 'danhmuc' ? 'active' : ''}`} onClick={() => changeTab('danhmuc')} id="tab-danhmuc">🗂️ Danh mục</button>
                   <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => changeTab('users')} id="tab-users">👤 Thành viên</button>
                   <button className={`tab-btn ${activeTab === 'email' ? 'active' : ''}`} onClick={() => changeTab('email')} id="tab-email">📧 Email</button>
+                  <button className={`tab-btn ${activeTab === 'drive' ? 'active' : ''}`} onClick={() => changeTab('drive')} id="tab-drive">☁️ Lưu trữ (Drive)</button>
                 </>
               )}
             </>
@@ -686,6 +693,9 @@ export default function AdminPage() {
         )}
         {activeTab === 'email' && userIsAdmin && (
           <EmailTemplateTab onAlert={setAlert} />
+        )}
+        {activeTab === 'drive' && userIsAdmin && (
+          <DriveTab onAlert={setAlert} />
         )}
 
         {/* ====== PROFILE MODAL ====== */}
@@ -725,6 +735,14 @@ export default function AdminPage() {
                       value={profileForm.email} 
                       onChange={e => setProfileForm({ ...profileForm, email: e.target.value })} 
                       placeholder="Dùng để nhận thông báo"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Số điện thoại</label>
+                    <input type="tel" className="form-input" 
+                      value={profileForm.soDienThoai} 
+                      onChange={e => setProfileForm({ ...profileForm, soDienThoai: e.target.value })} 
+                      placeholder="0901234567"
                     />
                   </div>
                   <div className="form-group">

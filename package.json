@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma db push && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"
@@ -12,6 +12,7 @@
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
     "@prisma/client": "^5.22.0",
+    "googleapis": "^173.0.0",
     "next": "^16.2.9",
     "nodemailer": "^8.0.5",
     "react": "19.2.4",
