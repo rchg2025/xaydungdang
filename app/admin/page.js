@@ -667,8 +667,8 @@ export default function AdminPage() {
                 </span>
               </div>
             </div>
-            <button onClick={handleLogout} className="btn btn-sm btn-danger" style={{ marginLeft: '4px' }}>
-              Đăng xuất
+            <button onClick={handleLogout} className="btn btn-sm btn-danger" style={{ marginLeft: '4px', fontSize: '1.1rem', padding: '4px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Đăng xuất">
+              🚪
             </button>
           </nav>
         </div>
