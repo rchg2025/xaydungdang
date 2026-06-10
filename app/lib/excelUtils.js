@@ -2,7 +2,6 @@
 // Excel Import / Export Utilities (SheetJS)
 // =============================================
 
-import * as XLSX from 'xlsx';
 import { STATUSES } from './constants';
 
 // ---- Tiêu đề cột xuất file ----
@@ -64,7 +63,8 @@ function getCurrentStepLabel(applicant) {
 // =============================================
 // EXPORT
 // =============================================
-export function exportApplicantsToXlsx(applicants, label) {
+export async function exportApplicantsToXlsx(applicants, label) {
+  const XLSX = await import('xlsx');
   // --- Sheet 1: Danh sách quần chúng ---
   const rows = applicants.map((a, i) => ({
     STT: i + 1,
@@ -150,7 +150,8 @@ export function exportApplicantsToXlsx(applicants, label) {
 // =============================================
 // EXPORT TEMPLATE CHỈ (file mẫu trống)
 // =============================================
-export function exportImportTemplate() {
+export async function exportImportTemplate() {
+  const XLSX = await import('xlsx');
   const templateRows = [
     {
       'Số CCCD': '',
@@ -182,7 +183,8 @@ export function exportImportTemplate() {
 // =============================================
 // IMPORT
 // =============================================
-export function parseXlsxFile(file) {
+export async function parseXlsxFile(file) {
+  const XLSX = await import('xlsx');
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -288,7 +290,8 @@ export const IMPORT_TEMPLATE_HEADERS_CHIBO = [
   'Email'
 ];
 
-export function exportChiBoToXlsx(chiBoList) {
+export async function exportChiBoToXlsx(chiBoList) {
+  const XLSX = await import('xlsx');
   const rows = chiBoList.map((cb, i) => ({
     STT: i + 1,
     'Tên Chi bộ / Đảng bộ': cb.ten || '',
@@ -315,7 +318,8 @@ export function exportChiBoToXlsx(chiBoList) {
   XLSX.writeFile(wb, `DanhSachChiBo_${today}.xlsx`);
 }
 
-export function exportImportTemplateChiBo() {
+export async function exportImportTemplateChiBo() {
+  const XLSX = await import('xlsx');
   const templateRows = [
     {
       'Tên Chi bộ / Đảng bộ': 'Chi bộ Mẫu',
@@ -342,7 +346,8 @@ export function exportImportTemplateChiBo() {
   XLSX.writeFile(wb, 'MauNhapLieuChiBo.xlsx');
 }
 
-export function parseXlsxFileChiBo(file) {
+export async function parseXlsxFileChiBo(file) {
+  const XLSX = await import('xlsx');
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {

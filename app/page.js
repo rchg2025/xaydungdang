@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import ProcessTimeline from './components/ProcessTimeline';
 import { searchApplicantsAPI, fetchStats, getCurrentStep } from './lib/apiClient';
 
@@ -53,7 +54,7 @@ export default function HomePage() {
       <header className="header">
         <div className="header-inner">
           <Link href="/" className="header-logo">
-            <img src="/logo.png" alt="Logo" className="header-logo-img" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+            <Image src="/logo.png" alt="Logo" width={40} height={40} className="header-logo-img" style={{ objectFit: 'contain' }} priority />
             <div className="header-logo-text">
               XÂY DỰNG <span>ĐẢNG</span><br />
               <span className="header-logo-sub">Đảng bộ Phường Chánh Hưng, TP.HCM</span>

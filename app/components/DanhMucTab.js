@@ -475,7 +475,7 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button 
                 className="btn btn-secondary btn-sm" 
-                onClick={() => exportImportTemplateChiBo()}
+                onClick={async () => await exportImportTemplateChiBo()}
                 title="Tải file Excel mẫu để nhập dữ liệu"
               >
                 📥 Tải file mẫu
@@ -494,7 +494,7 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
 
               <button 
                 className="btn btn-secondary btn-sm" 
-                onClick={() => exportChiBoToXlsx(chiBoList)}
+                onClick={async () => await exportChiBoToXlsx(chiBoList)}
                 title="Xuất toàn bộ danh sách hiện tại ra Excel"
                 disabled={chiBoList.length === 0}
               >

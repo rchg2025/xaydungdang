@@ -200,7 +200,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
   };
 
   // ---- Export (filtered) ----
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
       const label = [
         hasActiveFilter && 'bo-loc',
@@ -208,7 +208,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
         dateFrom && `tu-${dateFrom}`,
         dateTo && `den-${dateTo}`,
       ].filter(Boolean).join('_');
-      exportApplicantsToXlsx(filtered, label || undefined);
+      await exportApplicantsToXlsx(filtered, label || undefined);
       onAlert({ type: 'success', message: `Xuất ${filtered.length} hồ sơ ra Excel thành công!` });
     } catch (err) {
       onAlert({ type: 'error', message: 'Lỗi xuất file: ' + err.message });
@@ -288,7 +288,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
           </button>
           {userIsAdmin && (
             <>
-              <button className="btn btn-secondary" onClick={() => exportImportTemplate()} id="btn-download-template">📄 File mẫu</button>
+              <button className="btn btn-secondary" onClick={async () => await exportImportTemplate()} id="btn-download-template">📄 File mẫu</button>
               <button className="btn btn-secondary" onClick={() => setShowImportModal(true)} id="btn-import">📥 Nhập Excel</button>
               <button className="btn btn-secondary" onClick={handleExport} disabled={filtered.length === 0} id="btn-export" title={`Xuất ${filtered.length} hồ sơ hiện tại`}>📤 Xuất Excel ({filtered.length})</button>
             </>
@@ -619,7 +619,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
                   </label>
                 </div>
                 <div style={{ marginTop: '0.5rem', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                  💡 <button type="button" onClick={() => exportImportTemplate()} className="link-btn">Tải file mẫu nhập liệu</button>
+                  💡 <button type="button" onClick={async () => await exportImportTemplate()} className="link-btn">Tải file mẫu nhập liệu</button>
                 </div>
               </div>
 
