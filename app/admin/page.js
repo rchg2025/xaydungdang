@@ -74,7 +74,9 @@ export default function AdminPage() {
 
   // Profile Modal
   const [showProfile, setShowProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ hoTen: '', email: '', soDienThoai: '', password: '' });
+  const [profileForm, setProfileForm] = useState({ hoTen: '', email: '', soDienThoai: '', password: '', avatar: '' });
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
   const openProfile = () => {
@@ -82,19 +84,49 @@ export default function AdminPage() {
       hoTen: currentUser.hoTen || '',
       email: currentUser.email || '',
       soDienThoai: currentUser.soDienThoai || '',
+      avatar: currentUser.avatar || '',
       password: ''
     });
+    setAvatarFile(null);
+    setAvatarPreview(null);
     setShowProfile(true);
+  };
+
+  const handleAvatarChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setProfileLoading(true);
     try {
+      let finalAvatarId = profileForm.avatar;
+
+      // Upload avatar to Drive if a new file is selected
+      if (avatarFile) {
+        const formData = new FormData();
+        formData.append('file', avatarFile);
+        const uploadRes = await fetch('/api/drive/upload', {
+          method: 'POST',
+          body: formData
+        });
+        if (!uploadRes.ok) {
+           const err = await uploadRes.json();
+           throw new Error(err.error || 'Upload ảnh thất bại');
+        }
+        const data = await uploadRes.json();
+        finalAvatarId = data.fileId;
+      }
+
       const payload = { 
         hoTen: profileForm.hoTen, 
         email: profileForm.email,
-        soDienThoai: profileForm.soDienThoai
+        soDienThoai: profileForm.soDienThoai,
+        avatar: finalAvatarId
       };
       if (profileForm.password) payload.password = profileForm.password;
       
@@ -618,8 +650,12 @@ export default function AdminPage() {
               style={{ cursor: 'pointer' }}
               title="Cập nhật thông tin cá nhân"
             >
-              <div className={`user-avatar user-avatar-${currentUser.role}`}>
-                {(currentUser.hoTen || currentUser.username || 'U').charAt(0).toUpperCase()}
+              <div className={`user-avatar user-avatar-${currentUser.role}`} style={{ overflow: 'hidden' }}>
+                {currentUser.avatar ? (
+                  <img src={`/api/drive/image/${currentUser.avatar}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  (currentUser.hoTen || currentUser.username || 'U').charAt(0).toUpperCase()
+                )}
               </div>
               <div className="user-session-info">
                 <span className="user-session-name" style={{ textDecoration: 'underline', textDecorationColor: 'rgba(255,255,255,0.3)' }}>{currentUser.hoTen || currentUser.username}</span>
@@ -708,6 +744,21 @@ export default function AdminPage() {
               </div>
               <form onSubmit={handleUpdateProfile}>
                 <div className="modal-body">
+                  <div className="form-group" style={{ textAlign: 'center' }}>
+                    <label>Ảnh đại diện</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                      <div className="user-avatar" style={{ width: '80px', height: '80px', fontSize: '32px', overflow: 'hidden', background: 'var(--color-bg-secondary)' }}>
+                        {avatarPreview ? (
+                          <img src={avatarPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : profileForm.avatar ? (
+                          <img src={`/api/drive/image/${profileForm.avatar}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          (currentUser.hoTen || currentUser.username || 'U').charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <input type="file" accept="image/*" onChange={handleAvatarChange} style={{ fontSize: '12px' }} />
+                    </div>
+                  </div>
                   <div className="form-group">
                     <label>Tên đăng nhập</label>
                     <input type="text" className="form-input" disabled value={currentUser.username} />

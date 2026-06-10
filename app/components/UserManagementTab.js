@@ -341,8 +341,12 @@ Quản trị viên Hệ thống`
                     <td>{i + 1}</td>
                     <td style={{ fontWeight: 600 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div className={`user-avatar user-avatar-${u.role}`}>
-                          {(u.hoTen || u.username || 'U').charAt(0).toUpperCase()}
+                        <div className={`user-avatar user-avatar-${u.role}`} style={{ overflow: 'hidden' }}>
+                          {u.avatar ? (
+                            <img src={`/api/drive/image/${u.avatar}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            (u.hoTen || u.username || 'U').charAt(0).toUpperCase()
+                          )}
                         </div>
                         {u.hoTen}
                       </div>
@@ -634,8 +638,12 @@ Quản trị viên Hệ thống`
             <div className="modal-body">
               <p style={{ marginBottom: '0.75rem' }}>Bạn có chắc muốn xóa thành viên:</p>
               <div className="danhmuc-delete-preview">
-                <div className={`user-avatar user-avatar-${deletingUser.role}`}>
-                  {(deletingUser.hoTen || deletingUser.username || 'U').charAt(0).toUpperCase()}
+                <div className={`user-avatar user-avatar-${deletingUser.role}`} style={{ width: '64px', height: '64px', fontSize: '28px', margin: '0 auto 1rem auto', overflow: 'hidden' }}>
+                  {deletingUser.avatar ? (
+                    <img src={`/api/drive/image/${deletingUser.avatar}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    (deletingUser.hoTen || deletingUser.username || 'U').charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div>
                   <strong>{deletingUser.hoTen}</strong>
