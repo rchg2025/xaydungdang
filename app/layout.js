@@ -4,6 +4,10 @@ export const metadata = {
   title: 'Xây dựng Đảng - Đảng bộ Phường Chánh Hưng, TP.HCM',
   description: 'Tra cứu và quản lý quy trình tiếp nhận hồ sơ kết nạp Đảng viên Đảng Cộng sản Việt Nam tại Đảng bộ Phường Chánh Hưng, TP.HCM.',
   keywords: 'kết nạp đảng, quy trình, đảng viên, tra cứu, quản lý, phường chánh hưng, tp hcm',
+  icons: {
+    icon: 'https://dangbo.phuongchanhhung.vn/wp-content/uploads/2026/02/cropped-dangbo-phuongchanhhung-vn.webp',
+    apple: 'https://dangbo.phuongchanhhung.vn/wp-content/uploads/2026/02/cropped-dangbo-phuongchanhhung-vn.webp',
+  },
 };
 
 export default function RootLayout({ children }) {
