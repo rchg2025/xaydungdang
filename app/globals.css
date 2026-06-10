@@ -75,7 +75,7 @@
 }
 
 /* ---- Light Theme Variables ---- */
-.light-theme {
+html.light-theme, [data-theme="light"], .light-theme {
   /* Color palette */
   --color-bg-primary: #f8f9fa;
   --color-bg-secondary: #ffffff;

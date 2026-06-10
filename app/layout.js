@@ -20,6 +20,7 @@ export default function RootLayout({ children }) {
                   var theme = localStorage.getItem('theme');
                   if (theme === 'light') {
                     document.documentElement.classList.add('light-theme');
+                    document.documentElement.setAttribute('data-theme', 'light');
                     document.documentElement.style.setProperty('--color-bg-primary', '#f8f9fa');
                   }
                 } catch (e) {}

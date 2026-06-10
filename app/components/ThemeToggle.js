@@ -8,7 +8,10 @@ export default function ThemeToggle() {
     const saved = localStorage.getItem('theme');
     if (saved) {
       setTheme(saved);
-      if (saved === 'light') document.documentElement.classList.add('light-theme');
+      if (saved === 'light') {
+        document.documentElement.classList.add('light-theme');
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
     }
   }, []);
 
@@ -19,8 +22,10 @@ export default function ThemeToggle() {
     
     if (newTheme === 'light') {
       document.documentElement.classList.add('light-theme');
+      document.documentElement.setAttribute('data-theme', 'light');
     } else {
       document.documentElement.classList.remove('light-theme');
+      document.documentElement.removeAttribute('data-theme');
     }
   };
 
