@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import ProcessTimeline from './components/ProcessTimeline';
+import ThemeToggle from './components/ThemeToggle';
 import { searchApplicantsAPI, fetchStats, getCurrentStep } from './lib/apiClient';
 
 export default function HomePage() {
@@ -63,6 +64,7 @@ export default function HomePage() {
           <nav className="header-nav">
             <Link href="/" className="header-nav-link active">🔍 Tra cứu</Link>
             <Link href="/admin" className="header-nav-link">🔐 Quản trị</Link>
+            <ThemeToggle />
           </nav>
         </div>
       </header>

@@ -21,6 +21,8 @@ import {
 // Tab components
 import DashboardTab from '../components/DashboardTab';
 import ApplicantTab from '../components/ApplicantTab';
+import SettingsTab from '../components/SettingsTab';
+import ThemeToggle from '../components/ThemeToggle';
 import ProcessesTab from '../components/ProcessesTab';
 import DanhMucTab from '../components/DanhMucTab';
 import UserManagementTab from '../components/UserManagementTab';
@@ -645,6 +647,7 @@ export default function AdminPage() {
           <nav className="header-nav">
             <Link href="/" className="header-nav-link">🔍 Tra cứu</Link>
             <Link href="/admin" className="header-nav-link active">🔐 Quản trị</Link>
+            <ThemeToggle />
             <div 
               className="user-session-badge" 
               onClick={openProfile} 

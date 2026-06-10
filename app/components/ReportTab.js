@@ -192,17 +192,22 @@ export default function ReportTab({ applicants, chiBoList, currentUser }) {
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {!isThanhVien && (
-              <select 
-                className="form-input" 
-                style={{ width: 'auto', padding: '0.375rem 0.75rem' }}
-                value={filterChiBo} 
-                onChange={e => setFilterChiBo(e.target.value)}
-              >
-                <option value="">Tất cả đơn vị</option>
-                {chiBoList.map(cb => (
-                  <option key={cb.id} value={cb.tenChiBo}>{cb.tenChiBo}</option>
-                ))}
-              </select>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  list="chibo-options"
+                  className="form-input" 
+                  style={{ width: '220px', padding: '0.375rem 0.75rem' }}
+                  placeholder="Tất cả đơn vị (Nhập để tìm...)"
+                  value={filterChiBo} 
+                  onChange={e => setFilterChiBo(e.target.value)}
+                />
+                <datalist id="chibo-options">
+                  <option value="">Tất cả đơn vị</option>
+                  {chiBoList.map(cb => (
+                    <option key={cb.ten} value={cb.ten} />
+                  ))}
+                </datalist>
+              </div>
             )}
 
             <select 

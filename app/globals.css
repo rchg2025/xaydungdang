@@ -73,6 +73,51 @@
   --text-5xl: 3rem;
 }
 
+/* ---- Light Theme Variables ---- */
+.light-theme {
+  /* Color palette */
+  --color-bg-primary: #f8f9fa;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f1f5f9;
+  --color-surface-active: #e2e8f0;
+  --color-border: #e2e8f0;
+  --color-border-hover: #cbd5e1;
+
+  /* Brand colors (keep the red/gold tone but adjusted for light mode) */
+  --color-primary: #c41e3a;
+  --color-primary-light: #e63950;
+  --color-primary-dark: #9a1830;
+  --color-accent: #d97706;
+  --color-accent-light: #f59e0b;
+  --color-accent-dark: #b45309;
+
+  /* Text */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+
+  /* Status colors */
+  --color-success: #059669;
+  --color-success-bg: #d1fae5;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-info: #2563eb;
+  --color-info-bg: #dbeafe;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fee2e2;
+  --color-neutral: #475569;
+  --color-neutral-bg: #f1f5f9;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-glow-red: 0 4px 14px 0 rgba(196, 30, 58, 0.39);
+  --shadow-glow-gold: 0 4px 14px 0 rgba(217, 119, 6, 0.39);
+}
+
 /* ---- Reset ---- */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -198,6 +243,24 @@ input, select, textarea, button {
   background: rgba(255, 215, 0, 0.08);
   border-color: rgba(255, 215, 0, 0.2);
 }
+
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+
+.theme-toggle-btn:hover {
+  background: var(--color-surface-hover);
+}
+
 
 /* ---- Hero Section ---- */
 .hero {
