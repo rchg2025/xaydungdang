@@ -91,11 +91,12 @@ export default function AdminPage() {
       const tongSo = apps.length;
       let dangXuLy = 0, daHoanThanh = 0, choXuLy = 0, daHuy = 0;
       apps.forEach(a => {
-        const hasHuy = a.quyTrinh.some(s => s.trangThai === 'huy_ho_so');
+        const quyTrinh = a.quyTrinh || [];
+        const hasHuy = quyTrinh.some(s => s.trangThai === 'huy_ho_so');
         if (hasHuy) { daHuy++; return; }
-        const allDone = a.quyTrinh.every(s => s.trangThai === 'da_nhan_phan_hoi');
+        const allDone = quyTrinh.length > 0 && quyTrinh.every(s => s.trangThai === 'da_nhan_phan_hoi');
         if (allDone) { daHoanThanh++; return; }
-        const hasDang = a.quyTrinh.some(s => s.trangThai === 'dang_xu_ly' || s.trangThai === 'da_gui');
+        const hasDang = quyTrinh.some(s => s.trangThai === 'dang_xu_ly' || s.trangThai === 'da_gui');
         if (hasDang) { dangXuLy++; return; }
         choXuLy++;
       });

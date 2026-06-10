@@ -17,17 +17,18 @@ import ProcessTimeline from './ProcessTimeline';
 const PAGE_SIZE = 10;
 
 // Trạng thái tổng thể của 1 hồ sơ
-function getApplicantStatus(a) {
-  const hasHuy = a.quyTrinh.some(s => s.trangThai === STATUSES.HUY_HO_SO);
+const getApplicantStatus = (a) => {
+  const quyTrinh = a.quyTrinh || [];
+  const hasHuy = quyTrinh.some(s => s.trangThai === STATUSES.HUY_HO_SO);
   if (hasHuy) return 'huy_ho_so';
-  const allDone = a.quyTrinh.every(s => s.trangThai === STATUSES.DA_NHAN_PHAN_HOI);
+  const allDone = quyTrinh.length > 0 && quyTrinh.every(s => s.trangThai === STATUSES.DA_NHAN_PHAN_HOI);
   if (allDone) return 'hoan_thanh';
-  const hasDang = a.quyTrinh.some(s => s.trangThai === STATUSES.DANG_XU_LY);
+  const hasDang = quyTrinh.some(s => s.trangThai === STATUSES.DANG_XU_LY);
   if (hasDang) return 'dang_xu_ly';
-  const hasGui = a.quyTrinh.some(s => s.trangThai === STATUSES.DA_GUI);
+  const hasGui = quyTrinh.some(s => s.trangThai === STATUSES.DA_GUI);
   if (hasGui) return 'da_gui';
   return 'cho_xu_ly';
-}
+};
 
 const STATUS_FILTER_OPTIONS = [
   { value: 'dang_xu_ly', label: '🔄 Đang xử lý' },
@@ -213,7 +214,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
       onAlert({ type: 'success', message: `Cập nhật bước ${soThuTu} thành công!` });
 
       // Gửi email thông báo cho chi bộ (nếu chi bộ có email)
-      const step = updated.quyTrinh.find(s => s.soThuTu === soThuTu);
+      const step = (updated.quyTrinh || []).find(s => s.soThuTu === soThuTu);
       if (step) {
         try {
           const overallStatus = getApplicantStatus(updated);
@@ -299,12 +300,13 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
   const getStepName = (a) => {
     const step = getCurrentStep(a);
     if (step === -1) return null; // cancelled
+    const quyTrinh = a.quyTrinh || [];
     // Find the next pending step (what they're working on)
-    const nextStep = a.quyTrinh.find(s =>
+    const nextStep = quyTrinh.find(s =>
       s.trangThai === STATUSES.DANG_XU_LY || s.trangThai === STATUSES.DA_GUI || s.trangThai === STATUSES.CHUA_BAT_DAU
     );
     if (nextStep) return { num: nextStep.soThuTu, name: nextStep.tenQuyTrinh };
-    return { num: a.quyTrinh.length, name: a.quyTrinh[a.quyTrinh.length - 1]?.tenQuyTrinh };
+    return { num: quyTrinh.length, name: quyTrinh[quyTrinh.length - 1]?.tenQuyTrinh };
   };
 
   return (
@@ -606,7 +608,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
               <button className="modal-close" onClick={() => setShowProcessModal(false)}>✕</button>
             </div>
             <div className="modal-body">
-              {selectedApplicant.quyTrinh.map(step => (
+              {(selectedApplicant.quyTrinh || []).map(step => (
                 <div key={step.soThuTu} className="process-step-row">
                   <div className="process-step-number">{step.soThuTu}</div>
                   <div className="process-step-info">
