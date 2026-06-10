@@ -21,7 +21,6 @@ import {
 // Tab components
 import DashboardTab from '../components/DashboardTab';
 import ApplicantTab from '../components/ApplicantTab';
-import SettingsTab from '../components/SettingsTab';
 import ThemeToggle from '../components/ThemeToggle';
 import ProcessesTab from '../components/ProcessesTab';
 import DanhMucTab from '../components/DanhMucTab';
