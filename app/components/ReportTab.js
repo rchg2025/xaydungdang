@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react';
 import { STATUSES } from '../lib/constants';
 import { ROLES, getCurrentStep } from '../lib/apiClient';
 import { exportApplicantsToXlsx } from '../lib/excelUtils';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 
 // Lấy trạng thái tổng thể của hồ sơ
 const getApplicantStatus = (a) => {
@@ -100,34 +101,71 @@ export default function ReportTab({ applicants, chiBoList, currentUser }) {
       
       {/* 1. Khu vực Thống kê (Cards) */}
       <div className="stats-grid" style={{ marginBottom: '20px' }}>
-        <div className="stat-card" style={{ background: 'linear-gradient(135deg, var(--color-primary), #0056b3)' }}>
-          <div className="stat-value" style={{ color: 'white' }}>{stats.tong}</div>
-          <div className="stat-label" style={{ color: 'rgba(255,255,255,0.8)' }}>Tổng số hồ sơ</div>
+        <div className="stat-card">
+          <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.12)', color: '#60a5fa', boxShadow: '0 0 0 1px rgba(59,130,246,0.2)' }}>📁</div>
+          <div className="stat-card-body">
+            <div className="stat-card-value" style={{ color: '#60a5fa' }}>{stats.tong}</div>
+            <div className="stat-card-label">TỔNG SỐ HỒ SƠ</div>
+          </div>
         </div>
         <div className="stat-card">
-          <div className="stat-value" style={{ color: '#28a745' }}>{stats.hoan_thanh}</div>
-          <div className="stat-label">✅ Hoàn thành</div>
+          <div className="stat-card-icon" style={{ background: 'rgba(99,102,241,0.12)', color: '#818cf8', boxShadow: '0 0 0 1px rgba(99,102,241,0.2)' }}>🔄</div>
+          <div className="stat-card-body">
+            <div className="stat-card-value" style={{ color: '#818cf8' }}>{stats.dang_xu_ly}</div>
+            <div className="stat-card-label">ĐANG XỬ LÝ</div>
+          </div>
         </div>
         <div className="stat-card">
-          <div className="stat-value" style={{ color: '#ffc107' }}>{stats.dang_xu_ly}</div>
-          <div className="stat-label">🔄 Đang xử lý</div>
+          <div className="stat-card-icon" style={{ background: 'rgba(16,185,129,0.12)', color: '#34d399', boxShadow: '0 0 0 1px rgba(16,185,129,0.2)' }}>✅</div>
+          <div className="stat-card-body">
+            <div className="stat-card-value" style={{ color: '#10b981' }}>{stats.hoan_thanh}</div>
+            <div className="stat-card-label">HOÀN THÀNH</div>
+          </div>
         </div>
         <div className="stat-card">
-          <div className="stat-value" style={{ color: '#dc3545' }}>{stats.tu_choi}</div>
-          <div className="stat-label">❌ Đã từ chối</div>
+          <div className="stat-card-icon" style={{ background: 'rgba(245,158,11,0.12)', color: '#fbbf24', boxShadow: '0 0 0 1px rgba(245,158,11,0.2)' }}>⏳</div>
+          <div className="stat-card-body">
+            <div className="stat-card-value" style={{ color: '#f59e0b' }}>{stats.cho_xu_ly}</div>
+            <div className="stat-card-label">CHỜ XỬ LÝ</div>
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-icon" style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', boxShadow: '0 0 0 1px rgba(239,68,68,0.2)' }}>❌</div>
+          <div className="stat-card-body">
+            <div className="stat-card-value" style={{ color: '#ef4444' }}>{stats.tu_choi}</div>
+            <div className="stat-card-label">ĐÃ TỪ CHỐI</div>
+          </div>
         </div>
       </div>
 
-      {/* Thống kê theo bước */}
+      {/* Thống kê theo bước (Biểu đồ) */}
       {Object.keys(stats.steps).length > 0 && (
-        <div className="card" style={{ marginBottom: '20px', padding: '15px' }}>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>📊 Thống kê hồ sơ đang thực hiện theo Bước</h3>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {Object.entries(stats.steps).sort((a, b) => Number(a[0]) - Number(b[0])).map(([step, count]) => (
-              <div key={step} style={{ background: 'var(--color-bg-secondary)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-border)' }}>
-                <strong style={{ color: 'var(--color-primary)' }}>Bước {step}:</strong> <span style={{ fontWeight: 'bold' }}>{count}</span> hồ sơ
-              </div>
-            ))}
+        <div className="card" style={{ marginBottom: '20px', padding: '20px' }}>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '20px' }}>📊</span> Biểu đồ hồ sơ đang thực hiện theo bước
+          </h3>
+          <div style={{ height: '300px', width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={Object.entries(stats.steps).map(([step, count]) => ({ name: `Bước ${step}`, count }))}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                <XAxis dataKey="name" stroke="var(--color-text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis allowDecimals={false} stroke="var(--color-text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border)', borderRadius: '8px', color: 'var(--color-text)' }}
+                  itemStyle={{ color: 'var(--color-primary)', fontWeight: 'bold' }}
+                />
+                <Bar dataKey="count" name="Số hồ sơ" radius={[4, 4, 0, 0]} maxBarSize={60}>
+                  {
+                    Object.entries(stats.steps).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill="var(--color-primary)" />
+                    ))
+                  }
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}
