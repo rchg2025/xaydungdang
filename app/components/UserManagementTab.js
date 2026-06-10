@@ -342,7 +342,7 @@ Quản trị viên Hệ thống`
                     <td style={{ fontWeight: 600 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div className={`user-avatar user-avatar-${u.role}`}>
-                          {u.hoTen.charAt(0).toUpperCase()}
+                          {(u.hoTen || u.username || 'U').charAt(0).toUpperCase()}
                         </div>
                         {u.hoTen}
                       </div>
@@ -635,7 +635,7 @@ Quản trị viên Hệ thống`
               <p style={{ marginBottom: '0.75rem' }}>Bạn có chắc muốn xóa thành viên:</p>
               <div className="danhmuc-delete-preview">
                 <div className={`user-avatar user-avatar-${deletingUser.role}`}>
-                  {deletingUser.hoTen.charAt(0).toUpperCase()}
+                  {(deletingUser.hoTen || deletingUser.username || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <strong>{deletingUser.hoTen}</strong>

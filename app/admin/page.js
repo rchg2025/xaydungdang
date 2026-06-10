@@ -566,7 +566,7 @@ export default function AdminPage() {
             <Link href="/admin" className="header-nav-link active">🔐 Quản trị</Link>
             <div className="user-session-badge">
               <div className={`user-avatar user-avatar-${currentUser.role}`}>
-                {currentUser.hoTen.charAt(0).toUpperCase()}
+                {(currentUser.hoTen || currentUser.username || 'U').charAt(0).toUpperCase()}
               </div>
               <div className="user-session-info">
                 <span className="user-session-name">{currentUser.hoTen}</span>
