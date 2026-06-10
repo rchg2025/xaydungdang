@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import { STATUSES } from '../lib/constants';
 import { ROLES, getCurrentStep } from '../lib/apiClient';
 import { exportApplicantsToXlsx } from '../lib/excelUtils';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, LabelList } from 'recharts';
 
 // Lấy trạng thái tổng thể của hồ sơ
 const getApplicantStatus = (a) => {
@@ -163,6 +163,7 @@ export default function ReportTab({ applicants, chiBoList, currentUser }) {
                       <Cell key={`cell-${index}`} fill="var(--color-primary)" />
                     ))
                   }
+                  <LabelList dataKey="count" position="top" fill="var(--color-text-primary)" fontSize={12} fontWeight="bold" />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
