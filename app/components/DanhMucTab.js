@@ -748,7 +748,7 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
 
       {/* ====== EDIT CHI BO MODAL ====== */}
       {editingChiBo && (
-        <div className="modal-overlay" onClick={() => setEditingChiBo(null)}>
+        <div className="modal-overlay">
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>✏️ Chỉnh sửa đơn vị</h3>

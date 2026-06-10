@@ -253,7 +253,7 @@ export default function UserManagementTab({ onAlert, currentUser, chiBoList = []
 
       {/* ====== ADD MODAL ====== */}
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+        <div className="modal-overlay">
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>➕ Thêm thành viên mới</h3>
@@ -350,7 +350,7 @@ export default function UserManagementTab({ onAlert, currentUser, chiBoList = []
 
       {/* ====== EDIT MODAL ====== */}
       {editingUser && (
-        <div className="modal-overlay" onClick={() => setEditingUser(null)}>
+        <div className="modal-overlay">
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>✏️ Sửa thành viên — {editingUser.hoTen}</h3>
@@ -431,7 +431,7 @@ export default function UserManagementTab({ onAlert, currentUser, chiBoList = []
 
       {/* ====== RESET PASSWORD MODAL ====== */}
       {resetUser && (
-        <div className="modal-overlay" onClick={() => setResetUser(null)}>
+        <div className="modal-overlay">
           <div className="modal" style={{ maxWidth: '420px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>🔑 Đặt lại mật khẩu</h3>
@@ -464,7 +464,7 @@ export default function UserManagementTab({ onAlert, currentUser, chiBoList = []
 
       {/* ====== DELETE MODAL ====== */}
       {deletingUser && (
-        <div className="modal-overlay" onClick={() => setDeletingUser(null)}>
+        <div className="modal-overlay">
           <div className="modal" style={{ maxWidth: '420px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>⚠️ Xác nhận xóa thành viên</h3>

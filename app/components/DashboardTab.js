@@ -140,8 +140,8 @@ export default function DashboardTab({ applicants, stats }) {
 
       {/* ====== VIEW PROCESS MODAL (read-only) ====== */}
       {viewApplicant && (
-        <div className="modal-overlay" onClick={() => setViewApplicant(null)}>
-          <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div>
                 <h3 style={{ margin: 0 }}>📋 Quy trình — {viewApplicant.hoTen}</h3>

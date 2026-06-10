@@ -427,7 +427,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
 
       {/* ====== ADD/EDIT MODAL ====== */}
       {showApplicantModal && (
-        <div className="modal-overlay" onClick={() => setShowApplicantModal(false)}>
+        <div className="modal-overlay">
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>{editingApplicant ? '✏️ Sửa thông tin' : '➕ Thêm quần chúng mới'}</h3>
@@ -540,7 +540,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
 
       {/* ====== PROCESS MODAL ====== */}
       {showProcessModal && selectedApplicant && (
-        <div className="modal-overlay" onClick={() => setShowProcessModal(false)}>
+        <div className="modal-overlay">
           <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div>
@@ -581,9 +581,9 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
         </div>
       )}
 
-      {/* ====== DELETE CONFIRM ====== */}
+      {/* ====== DELETE CONFIRM MODAL ====== */}
       {showDeleteConfirm && (
-        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(null)}>
+        <div className="modal-overlay">
           <div className="modal" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>⚠️ Xác nhận xóa</h3>
@@ -602,7 +602,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
 
       {/* ====== IMPORT MODAL ====== */}
       {showImportModal && (
-        <div className="modal-overlay" onClick={closeImport}>
+        <div className="modal-overlay">
           <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3>📥 Nhập dữ liệu từ Excel</h3>
