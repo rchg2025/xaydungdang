@@ -26,6 +26,7 @@ export async function GET(request) {
   }
 }
 
+export async function POST(request) {
   // Helper function to send email via local API
   const sendEmailAlert = async (to, subject, text) => {
     try {
