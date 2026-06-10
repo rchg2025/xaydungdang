@@ -120,7 +120,7 @@ export default function AdminPage() {
   }, [alert]);
 
   const userIsAdmin = currentUser?.role === 'admin';
-
+  const isThanhVien = currentUser?.role === 'thanh_vien';
   // ---- Auth ----
   const handleLogin = async (e) => {
     e.preventDefault();
