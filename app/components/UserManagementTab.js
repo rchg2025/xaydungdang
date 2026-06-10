@@ -14,7 +14,7 @@ import {
 // =============================================
 // User Management Tab Component (Admin only)
 // =============================================
-export default function UserManagementTab({ onAlert, currentUser }) {
+export default function UserManagementTab({ onAlert, currentUser, chiBoList = [] }) {
   const [users, setUsers] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -24,7 +24,7 @@ export default function UserManagementTab({ onAlert, currentUser }) {
 
   // ---- Form state ----
   const [formData, setFormData] = useState({
-    username: '', hoTen: '', email: '', role: ROLES.BIEN_TAP_VIEN, password: '',
+    username: '', hoTen: '', email: '', role: ROLES.BIEN_TAP_VIEN, password: '', chiBoDangBo: '',
   });
   const [resetPwd, setResetPwd] = useState('');
 
@@ -58,7 +58,7 @@ export default function UserManagementTab({ onAlert, currentUser }) {
       await createUser(formData);
       await loadUsers();
       setShowAddModal(false);
-      setFormData({ username: '', hoTen: '', email: '', role: ROLES.BIEN_TAP_VIEN, password: '' });
+      setFormData({ username: '', hoTen: '', email: '', role: ROLES.BIEN_TAP_VIEN, password: '', chiBoDangBo: '' });
       onAlert({ type: 'success', message: 'Đã thêm thành viên mới!' });
     } catch (err) {
       onAlert({ type: 'error', message: err.message });
@@ -72,6 +72,7 @@ export default function UserManagementTab({ onAlert, currentUser }) {
         hoTen: formData.hoTen,
         email: formData.email,
         role: formData.role,
+        chiBoDangBo: formData.role === ROLES.THANH_VIEN ? formData.chiBoDangBo : '',
       });
       await loadUsers();
       setEditingUser(null);
@@ -106,7 +107,7 @@ export default function UserManagementTab({ onAlert, currentUser }) {
 
   const openEdit = (user) => {
     setEditingUser(user);
-    setFormData({ username: user.username, hoTen: user.hoTen, email: user.email || '', role: user.role, password: '' });
+    setFormData({ username: user.username, hoTen: user.hoTen, email: user.email || '', role: user.role, password: '', chiBoDangBo: user.chiBoDangBo || '' });
   };
 
   const handleToggleActive = (user) => {
@@ -135,7 +136,7 @@ export default function UserManagementTab({ onAlert, currentUser }) {
         <button
           className="btn btn-accent"
           onClick={() => {
-            setFormData({ username: '', hoTen: '', email: '', role: ROLES.BIEN_TAP_VIEN, password: '' });
+            setFormData({ username: '', hoTen: '', email: '', role: ROLES.BIEN_TAP_VIEN, password: '', chiBoDangBo: '' });
             setShowAddModal(true);
           }}
           id="btn-add-user"
@@ -189,8 +190,13 @@ export default function UserManagementTab({ onAlert, currentUser }) {
                     <td style={{ fontSize: 'var(--text-xs)' }}>{u.email || '—'}</td>
                     <td>
                       <span className={`role-badge role-${u.role}`}>
-                        {u.role === ROLES.ADMIN ? '👑' : '✏️'} {ROLE_LABELS[u.role]}
+                        {u.role === ROLES.ADMIN ? '👑' : (u.role === ROLES.THANH_VIEN ? '👤' : '✏️')} {ROLE_LABELS[u.role]}
                       </span>
+                      {u.role === ROLES.THANH_VIEN && u.chiBoDangBo && (
+                        <div style={{ fontSize: '11px', marginTop: '4px', color: 'var(--color-accent)' }}>
+                          {u.chiBoDangBo}
+                        </div>
+                      )}
                     </td>
                     <td>
                       <span className={`status-badge ${u.active ? 'status-da_nhan_phan_hoi' : 'status-huy_ho_so'}`}>
@@ -293,10 +299,26 @@ export default function UserManagementTab({ onAlert, currentUser }) {
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     >
                       <option value={ROLES.BIEN_TAP_VIEN}>✏️ {ROLE_LABELS.bien_tap_vien}</option>
+                      <option value={ROLES.THANH_VIEN}>👤 {ROLE_LABELS.thanh_vien}</option>
                       <option value={ROLES.ADMIN}>👑 {ROLE_LABELS.admin}</option>
                     </select>
                   </div>
                 </div>
+                {formData.role === ROLES.THANH_VIEN && (
+                  <div className="form-group">
+                    <label>Chi bộ / Đảng bộ quản lý *</label>
+                    <select
+                      className="form-select" required
+                      value={formData.chiBoDangBo}
+                      onChange={(e) => setFormData({ ...formData, chiBoDangBo: e.target.value })}
+                    >
+                      <option value="">-- Chọn Chi bộ / Đảng bộ --</option>
+                      {chiBoList.map(cb => (
+                        <option key={cb.ten} value={cb.ten}>{cb.ten}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="form-group">
                   <label>Mật khẩu * (tối thiểu 6 ký tự)</label>
                   <input
@@ -312,7 +334,8 @@ export default function UserManagementTab({ onAlert, currentUser }) {
                   <span>ℹ️</span>
                   <span>
                     <strong>Quản trị viên:</strong> Toàn quyền quản lý hệ thống.{' '}
-                    <strong>Biên tập viên:</strong> Thêm quần chúng và cập nhật trạng thái quy trình.
+                    <strong>Biên tập viên:</strong> Quản lý toàn bộ hồ sơ.{' '}
+                    <strong>Thành viên:</strong> Chỉ quản lý hồ sơ thuộc Chi bộ/Đảng bộ được phân công.
                   </span>
                 </div>
               </div>
@@ -376,10 +399,26 @@ export default function UserManagementTab({ onAlert, currentUser }) {
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     >
                       <option value={ROLES.BIEN_TAP_VIEN}>✏️ {ROLE_LABELS.bien_tap_vien}</option>
+                      <option value={ROLES.THANH_VIEN}>👤 {ROLE_LABELS.thanh_vien}</option>
                       <option value={ROLES.ADMIN}>👑 {ROLE_LABELS.admin}</option>
                     </select>
                   </div>
                 </div>
+                {formData.role === ROLES.THANH_VIEN && (
+                  <div className="form-group">
+                    <label>Chi bộ / Đảng bộ quản lý *</label>
+                    <select
+                      className="form-select" required
+                      value={formData.chiBoDangBo}
+                      onChange={(e) => setFormData({ ...formData, chiBoDangBo: e.target.value })}
+                    >
+                      <option value="">-- Chọn Chi bộ / Đảng bộ --</option>
+                      {chiBoList.map(cb => (
+                        <option key={cb.ten} value={cb.ten}>{cb.ten}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setEditingUser(null)}>Hủy</button>

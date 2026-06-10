@@ -19,8 +19,9 @@ async function apiFetch(url, options = {}) {
 // =============================================
 // APPLICANTS
 // =============================================
-export async function fetchApplicants() {
-  return apiFetch(`${API}/applicants`);
+export async function fetchApplicants(chiBoDangBo) {
+  const url = chiBoDangBo ? `${API}/applicants?chiBoDangBo=${encodeURIComponent(chiBoDangBo)}` : `${API}/applicants`;
+  return apiFetch(url);
 }
 
 export async function fetchApplicant(id) {
@@ -194,9 +195,11 @@ export const SUPERADMIN_USERNAME = 'qtv';
 export const ROLES = {
   ADMIN: 'admin',
   BIEN_TAP_VIEN: 'bien_tap_vien',
+  THANH_VIEN: 'thanh_vien',
 };
 
 export const ROLE_LABELS = {
   admin: 'Quản trị viên',
   bien_tap_vien: 'Biên tập viên',
+  thanh_vien: 'Thành viên',
 };

@@ -17,7 +17,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { username, hoTen, password, role, email } = body;
+    const { username, hoTen, password, role, email, chiBoDangBo } = body;
 
     if (!username || !hoTen || !password) {
       return Response.json({ error: 'Thiếu thông tin bắt buộc' }, { status: 400 });
@@ -32,6 +32,7 @@ export async function POST(request) {
       data: {
         username, hoTen, password, email: email || '',
         role: role || 'bien_tap_vien',
+        chiBoDangBo: chiBoDangBo || '',
         ngayTao: new Date().toISOString().slice(0, 10),
         active: true,
       }

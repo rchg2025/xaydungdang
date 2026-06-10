@@ -64,6 +64,8 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
   const [chiBoSearch, setChiBoSearch] = useState('');
   const [showChiBoDropdown, setShowChiBoDropdown] = useState(false);
   const [page, setPage] = useState(1);
+  const isThanhVien = currentUser?.role === 'thanh_vien';
+  const canManageExcel = true; // Cho phép cả admin, biên tập viên, thành viên import/export
 
   // ---- Bộ lọc mới ----
   const [selectedStatuses, setSelectedStatuses] = useState([]); // multi-select
@@ -132,8 +134,8 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
   // ---- CRUD ----
   const openAdd = () => {
     setEditingApplicant(null);
-    setFormData({ cccd: '', hoTen: '', ngaySinh: '', soDienThoai: '', email: '', chiBoDangBo: '' });
-    setChiBoSearch('');
+    setFormData({ cccd: '', hoTen: '', ngaySinh: '', soDienThoai: '', email: '', chiBoDangBo: isThanhVien ? currentUser.chiBoDangBo : '' });
+    setChiBoSearch(isThanhVien ? currentUser.chiBoDangBo : '');
     setShowApplicantModal(true);
   };
 
@@ -236,6 +238,7 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
     let success = 0;
     const failed = [];
     for (const row of importPreview) {
+      if (isThanhVien) row.chiBoDangBo = currentUser.chiBoDangBo;
       try { await createApplicant(row); success++; }
       catch (err) { failed.push(`${row.hoTen}: ${err.message}`); }
     }
@@ -286,9 +289,9 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
           >
             📂 Bộ lọc {hasActiveFilter && <span className="filter-badge">{selectedStatuses.length + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0)}</span>}
           </button>
-          {userIsAdmin && (
+          {canManageExcel && (
             <>
-              <button className="btn btn-secondary" onClick={async () => await exportImportTemplate()} id="btn-download-template">📄 File mẫu</button>
+              <button className="btn btn-secondary" onClick={async () => await exportImportTemplate(isThanhVien ? currentUser.chiBoDangBo : '')} id="btn-download-template">📄 File mẫu</button>
               <button className="btn btn-secondary" onClick={() => setShowImportModal(true)} id="btn-import">📥 Nhập Excel</button>
               <button className="btn btn-secondary" onClick={handleExport} disabled={filtered.length === 0} id="btn-export" title={`Xuất ${filtered.length} hồ sơ hiện tại`}>📤 Xuất Excel ({filtered.length})</button>
             </>
@@ -466,16 +469,18 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
                     className="form-input"
                     placeholder="-- Nhập hoặc chọn chi bộ/đảng bộ --"
                     required
+                    disabled={isThanhVien}
                     value={chiBoSearch}
-                    onFocus={() => setShowChiBoDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowChiBoDropdown(false), 200)}
+                    onFocus={() => !isThanhVien && setShowChiBoDropdown(true)}
+                    onBlur={() => !isThanhVien && setTimeout(() => setShowChiBoDropdown(false), 200)}
                     onChange={e => {
+                      if (isThanhVien) return;
                       setChiBoSearch(e.target.value);
                       setFormData({ ...formData, chiBoDangBo: e.target.value });
                       setShowChiBoDropdown(true);
                     }}
                   />
-                  {showChiBoDropdown && (
+                  {showChiBoDropdown && !isThanhVien && (
                     <ul style={{
                       position: 'absolute',
                       top: '100%',

@@ -65,7 +65,7 @@ export default function AdminPage() {
   const loadData = useCallback(async () => {
     try {
       const [apps, cb] = await Promise.all([
-        fetchApplicants(),
+        fetchApplicants(currentUser?.role === ROLES.THANH_VIEN ? currentUser.chiBoDangBo : null),
         fetchChiBoList(),
       ]);
       setApplicants(apps);
@@ -614,7 +614,7 @@ export default function AdminPage() {
           <DanhMucTab onAlert={setAlert} onReload={loadData} onChiBoChanged={loadData} />
         )}
         {activeTab === 'users' && userIsAdmin && (
-          <UserManagementTab onAlert={setAlert} currentUser={currentUser} />
+          <UserManagementTab onAlert={setAlert} currentUser={currentUser} chiBoList={chiBoList} />
         )}
         {activeTab === 'email' && userIsAdmin && (
           <EmailTemplateTab onAlert={setAlert} />

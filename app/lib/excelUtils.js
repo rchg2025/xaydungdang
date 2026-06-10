@@ -150,7 +150,7 @@ export async function exportApplicantsToXlsx(applicants, label) {
 // =============================================
 // EXPORT TEMPLATE CHỈ (file mẫu trống)
 // =============================================
-export async function exportImportTemplate() {
+export async function exportImportTemplate(chiBoDangBo = '') {
   const XLSX = await import('xlsx');
   const templateRows = [
     {
@@ -159,7 +159,7 @@ export async function exportImportTemplate() {
       'Ngày Sinh (YYYY-MM-DD)': '',
       'Số Điện Thoại': '',
       'Email': '',
-      'Chi bộ / Đảng bộ': '',
+      'Chi bộ / Đảng bộ': chiBoDangBo,
     },
   ];
   const ws = XLSX.utils.json_to_sheet(templateRows, { header: IMPORT_TEMPLATE_HEADERS });

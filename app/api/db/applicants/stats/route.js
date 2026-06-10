@@ -2,10 +2,16 @@
 import prisma from '../../../../lib/prisma';
 import { seedDatabase } from '../../../../lib/seed';
 
-export async function GET() {
+export async function GET(request) {
   try {
     await seedDatabase();
+    const { searchParams } = new URL(request.url);
+    const chiBoDangBo = searchParams.get('chiBoDangBo');
+    
+    const where = chiBoDangBo ? { chiBoDangBo } : {};
+
     const all = await prisma.applicant.findMany({
+      where,
       select: {
         quyTrinh: {
           select: { trangThai: true }
