@@ -389,8 +389,8 @@ export default function AdminPage() {
               <div className="header-logo-text">XÂY DỰNG <span>ĐẢNG</span><br /><span className="header-logo-sub">Đảng bộ Phường Chánh Hưng, TP.HCM</span></div>
             </Link>
             <nav className="header-nav">
-              <Link href="/" className="header-nav-link">🔍 Tra cứu</Link>
-              <Link href="/admin" className="header-nav-link active">🔐 Quản trị</Link>
+              <Link href="/" className="header-nav-link">🔍 <span className="header-nav-text">Tra cứu</span></Link>
+              <Link href="/admin" className="header-nav-link active">🔐 <span className="header-nav-text">Quản trị</span></Link>
             </nav>
           </div>
         </header>
@@ -644,8 +644,8 @@ export default function AdminPage() {
             <div className="header-logo-text">XÂY DỰNG <span>ĐẢNG</span></div>
           </Link>
           <nav className="header-nav">
-            <Link href="/" className="header-nav-link">🔍 Tra cứu</Link>
-            <Link href="/admin" className="header-nav-link active">🔐 Quản trị</Link>
+            <Link href="/" className="header-nav-link">🔍 <span className="header-nav-text">Tra cứu</span></Link>
+            <Link href="/admin" className="header-nav-link active">🔐 <span className="header-nav-text">Quản trị</span></Link>
             <ThemeToggle />
             <div 
               className="user-session-badge" 

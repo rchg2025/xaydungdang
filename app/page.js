@@ -78,8 +78,8 @@ export default function HomePage() {
             </div>
           </Link>
           <nav className="header-nav">
-            <Link href="/" className="header-nav-link active">🔍 Tra cứu</Link>
-            <Link href="/admin" className="header-nav-link">🔐 Quản trị</Link>
+            <Link href="/" className="header-nav-link active">🔍 <span className="header-nav-text">Tra cứu</span></Link>
+            <Link href="/admin" className="header-nav-link">🔐 <span className="header-nav-text">Quản trị</span></Link>
             <ThemeToggle />
           </nav>
         </div>

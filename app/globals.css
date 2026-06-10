@@ -1511,8 +1511,13 @@ input, select, textarea, button {
   }
   
   .header-nav-link {
-    padding: 6px 10px;
-    font-size: var(--text-xs);
+    padding: 8px;
+    font-size: 1.1rem; /* Make icon a bit larger since text is gone */
+    justify-content: center;
+  }
+  
+  .header-nav-text {
+    display: none;
   }
 }
 
