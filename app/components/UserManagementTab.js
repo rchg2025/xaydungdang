@@ -136,20 +136,20 @@ export default function UserManagementTab({ onAlert, currentUser, chiBoList = []
                 to: row.email.trim(),
                 toName: row.hoTen,
                 subject: 'THÔNG BÁO TẠO TÀI KHOẢN MỚI - HỆ THỐNG XÂY DỰNG ĐẢNG',
-                message: \`Kính gửi \${row.hoTen},
+                message: `Kính gửi ${row.hoTen},
 
 Tài khoản truy cập Hệ thống Quản lý và Tiếp nhận hồ sơ Xây dựng Đảng của bạn đã được tạo thành công.
 
 Dưới đây là thông tin đăng nhập của bạn:
-- Tên đăng nhập: \${row.username}
-- Mật khẩu: \${row.password}
-- Vai trò: \${ROLE_LABELS[row.role] || row.role}
-\${row.chiBoDangBo ? \`- Chi bộ/Đảng bộ quản lý: \${row.chiBoDangBo}\\n\` : ''}- Đường dẫn truy cập: \${loginUrl}
+- Tên đăng nhập: ${row.username}
+- Mật khẩu: ${row.password}
+- Vai trò: ${ROLE_LABELS[row.role] || row.role}
+${row.chiBoDangBo ? `- Chi bộ/Đảng bộ quản lý: ${row.chiBoDangBo}\n` : ''}- Đường dẫn truy cập: ${loginUrl}
 
 Vui lòng đăng nhập vào hệ thống để bắt đầu công việc. (Bạn có thể đổi mật khẩu nếu cần thiết).
 
 Trân trọng,
-Quản trị viên Hệ thống\`
+Quản trị viên Hệ thống`
               })
             });
           } catch (emailErr) {
@@ -158,7 +158,7 @@ Quản trị viên Hệ thống\`
         }
       } catch (err) {
         failCount++;
-        setImportErrors(prev => [...prev, \`Lỗi tạo "\${row.username}": \${err.message}\`]);
+        setImportErrors(prev => [...prev, `Lỗi tạo "${row.username}": ${err.message}`]);
       }
     }
 
@@ -168,9 +168,9 @@ Quản trị viên Hệ thống\`
     await loadUsers();
     
     if (failCount === 0) {
-      onAlert({ type: 'success', message: \`Đã nhập thành công \${successCount} thành viên!\` });
+      onAlert({ type: 'success', message: `Đã nhập thành công ${successCount} thành viên!` });
     } else {
-      onAlert({ type: 'warning', message: \`Nhập xong: \${successCount} thành công, \${failCount} lỗi.\` });
+      onAlert({ type: 'warning', message: `Nhập xong: ${successCount} thành công, ${failCount} lỗi.` });
     }
   };
 
