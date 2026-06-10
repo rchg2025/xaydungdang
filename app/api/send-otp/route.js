@@ -116,7 +116,7 @@ export async function POST(request) {
           <tr>
             <td style="background:#f8f9fa;padding:20px 40px;text-align:center;border-top:1px solid #eee;">
               <p style="margin:0;color:#bbb;font-size:11px;">
-                © 2025 Xây dựng Đảng — Đảng bộ Phường Chánh Hưng<br/>
+                © ${new Date().getFullYear()} Xây dựng Đảng — Đảng bộ Phường Chánh Hưng<br/>
                 Email này được gửi tự động, vui lòng không trả lời.
               </p>
             </td>
