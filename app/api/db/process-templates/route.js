@@ -77,30 +77,33 @@ export async function PUT(request) {
 
       const num1 = all[idx].soThuTu;
       const num2 = all[swapIdx].soThuTu;
+      const tempId = -10000;
 
       // Swap in ProcessTemplate
-      await prisma.processTemplate.update({ where: { soThuTu: num1 }, data: { soThuTu: -1 } });
+      await prisma.processTemplate.update({ where: { soThuTu: num1 }, data: { soThuTu: tempId } });
       await prisma.processTemplate.update({ where: { soThuTu: num2 }, data: { soThuTu: num1 } });
-      await prisma.processTemplate.update({ where: { soThuTu: -1 }, data: { soThuTu: num2 } });
+      await prisma.processTemplate.update({ where: { soThuTu: tempId }, data: { soThuTu: num2 } });
 
       // Swap in ProcessStep
-      await prisma.processStep.updateMany({ where: { soThuTu: num1 }, data: { soThuTu: -1 } });
+      await prisma.processStep.updateMany({ where: { soThuTu: num1 }, data: { soThuTu: tempId } });
       await prisma.processStep.updateMany({ where: { soThuTu: num2 }, data: { soThuTu: num1 } });
-      await prisma.processStep.updateMany({ where: { soThuTu: -1 }, data: { soThuTu: num2 } });
+      await prisma.processStep.updateMany({ where: { soThuTu: tempId }, data: { soThuTu: num2 } });
     } else if (action === 'reorder') {
       if (!orderedTemplates || !Array.isArray(orderedTemplates)) {
         return Response.json({ error: 'Dữ liệu không hợp lệ' }, { status: 400 });
       }
 
       // 1. Move to negative temporary IDs to avoid UNIQUE constraint violation on `soThuTu`
-      for (const item of orderedTemplates) {
+      for (let i = 0; i < orderedTemplates.length; i++) {
+        const item = orderedTemplates[i];
+        const tempId = -10000 - i;
         await prisma.processTemplate.update({
           where: { id: item.id },
-          data: { soThuTu: -item.oldThuTu }
+          data: { soThuTu: tempId }
         });
         await prisma.processStep.updateMany({
           where: { soThuTu: item.oldThuTu },
-          data: { soThuTu: -item.oldThuTu }
+          data: { soThuTu: tempId }
         });
       }
 
@@ -108,12 +111,13 @@ export async function PUT(request) {
       for (let i = 0; i < orderedTemplates.length; i++) {
         const item = orderedTemplates[i];
         const newSoThuTu = i + 1;
+        const tempId = -10000 - i;
         await prisma.processTemplate.update({
           where: { id: item.id },
           data: { soThuTu: newSoThuTu }
         });
         await prisma.processStep.updateMany({
-          where: { soThuTu: -item.oldThuTu },
+          where: { soThuTu: tempId },
           data: { soThuTu: newSoThuTu }
         });
       }

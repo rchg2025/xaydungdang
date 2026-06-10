@@ -36,7 +36,7 @@ export async function POST() {
         const step = applicant.quyTrinh[i];
         await prisma.processStep.update({
           where: { id: step.id },
-          data: { soThuTu: -(i + 1) * 1000 } // temporary negative
+          data: { soThuTu: -100000 - i } // temporary negative
         });
       }
 

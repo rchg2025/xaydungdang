@@ -26,9 +26,25 @@ export default function HomePage() {
     setIsSearching(true);
     try {
       const found = await searchApplicantsAPI(cccd, chiBo);
-      setResults(found);
+      
+      const sorted = [...found].sort((a, b) => {
+        const isCompletedA = a.quyTrinh?.length > 0 && a.quyTrinh.every(s => s.trangThai === 'da_nhan_phan_hoi');
+        const isCompletedB = b.quyTrinh?.length > 0 && b.quyTrinh.every(s => s.trangThai === 'da_nhan_phan_hoi');
+        
+        if (isCompletedA !== isCompletedB) return isCompletedA ? 1 : -1;
+
+        const stepA = getCurrentStep(a);
+        const stepB = getCurrentStep(b);
+        if (stepA !== stepB) return stepB - stepA;
+
+        const dateA = new Date(a.updatedAt || a.createdAt || 0);
+        const dateB = new Date(b.updatedAt || b.createdAt || 0);
+        return dateB - dateA;
+      });
+
+      setResults(sorted);
       setSearched(true);
-      setExpandedId(found.length === 1 ? found[0].id : null);
+      setExpandedId(sorted.length === 1 ? sorted[0].id : null);
     } catch (err) {
       console.error(err);
     } finally {
