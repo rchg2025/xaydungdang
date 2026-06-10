@@ -11,7 +11,7 @@ export const metadata = {
     siteName: 'Hệ thống Tra cứu Quy trình tiếp nhận hồ sơ Kết nạp Đảng',
     images: [
       {
-        url: 'https://drive.google.com/uc?export=view&id=12ch3RNQSK1rNt9nPhxTZ1XafbWPZMXq0',
+        url: 'https://xdd.phuongchanhhung.vn/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'Hệ thống Tra cứu Quy trình tiếp nhận hồ sơ Kết nạp Đảng',
