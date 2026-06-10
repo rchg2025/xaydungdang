@@ -222,26 +222,28 @@ export default function ReportTab({ applicants, chiBoList, currentUser }) {
               ))}
             </select>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <label style={{ fontSize: '13px', margin: 0 }}>Từ:</label>
-              <input 
-                type="date" 
-                className="form-input" 
-                style={{ padding: '0.375rem 0.75rem' }}
-                value={dateFrom} 
-                onChange={e => setDateFrom(e.target.value)} 
-              />
-            </div>
+            <div className="date-filter-group" style={{ display: 'flex', gap: '10px', flexWrap: 'nowrap', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <label style={{ fontSize: '13px', margin: 0, whiteSpace: 'nowrap' }}>Từ:</label>
+                <input 
+                  type="date" 
+                  className="form-input" 
+                  style={{ padding: '0.375rem 0.75rem' }}
+                  value={dateFrom} 
+                  onChange={e => setDateFrom(e.target.value)} 
+                />
+              </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <label style={{ fontSize: '13px', margin: 0 }}>Đến:</label>
-              <input 
-                type="date" 
-                className="form-input" 
-                style={{ padding: '0.375rem 0.75rem' }}
-                value={dateTo} 
-                onChange={e => setDateTo(e.target.value)} 
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <label style={{ fontSize: '13px', margin: 0, whiteSpace: 'nowrap' }}>Đến:</label>
+                <input 
+                  type="date" 
+                  className="form-input" 
+                  style={{ padding: '0.375rem 0.75rem' }}
+                  value={dateTo} 
+                  onChange={e => setDateTo(e.target.value)} 
+                />
+              </div>
             </div>
           </div>
         </div>
