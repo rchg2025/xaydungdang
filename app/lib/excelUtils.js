@@ -266,3 +266,142 @@ export function parseXlsxFile(file) {
     reader.readAsArrayBuffer(file);
   });
 }
+
+// =============================================
+// CHI BỘ / ĐẢNG BỘ EXPORT & IMPORT
+// =============================================
+
+const EXPORT_HEADERS_CHIBO = [
+  'STT',
+  'Tên Chi bộ / Đảng bộ',
+  'Bí thư',
+  'Chánh Văn phòng',
+  'Số điện thoại',
+  'Email'
+];
+
+export const IMPORT_TEMPLATE_HEADERS_CHIBO = [
+  'Tên Chi bộ / Đảng bộ',
+  'Bí thư',
+  'Chánh Văn phòng',
+  'Số điện thoại',
+  'Email'
+];
+
+export function exportChiBoToXlsx(chiBoList) {
+  const rows = chiBoList.map((cb, i) => ({
+    STT: i + 1,
+    'Tên Chi bộ / Đảng bộ': cb.ten || '',
+    'Bí thư': cb.biThu || '',
+    'Chánh Văn phòng': cb.chanhVanPhong || '',
+    'Số điện thoại': cb.soDienThoai || '',
+    'Email': cb.email || '',
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows, { header: EXPORT_HEADERS_CHIBO });
+  ws['!cols'] = [
+    { wch: 5 },   // STT
+    { wch: 40 },  // Tên Chi bộ / Đảng bộ
+    { wch: 25 },  // Bí thư
+    { wch: 25 },  // Chánh Văn phòng
+    { wch: 15 },  // Số điện thoại
+    { wch: 30 },  // Email
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Danh Sách Chi Bộ');
+
+  const today = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `DanhSachChiBo_${today}.xlsx`);
+}
+
+export function exportImportTemplateChiBo() {
+  const templateRows = [
+    {
+      'Tên Chi bộ / Đảng bộ': 'Chi bộ Mẫu',
+      'Bí thư': 'Nguyễn Văn A',
+      'Chánh Văn phòng': 'Trần Thị B',
+      'Số điện thoại': '0901234567',
+      'Email': 'chibo@example.com',
+    },
+  ];
+  const ws = XLSX.utils.json_to_sheet(templateRows, { header: IMPORT_TEMPLATE_HEADERS_CHIBO });
+  ws['!cols'] = [
+    { wch: 40 }, { wch: 25 }, { wch: 25 }, { wch: 15 }, { wch: 30 },
+  ];
+
+  const note = XLSX.utils.aoa_to_sheet([
+    ['LƯU Ý: Điền từ hàng 2 trở đi. Tên Chi bộ / Đảng bộ là bắt buộc.'],
+    IMPORT_TEMPLATE_HEADERS_CHIBO,
+  ]);
+  note['!cols'] = [{ wch: 40 }, { wch: 25 }, { wch: 25 }, { wch: 15 }, { wch: 30 }];
+  note['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, note, 'Mẫu Nhập Liệu');
+  XLSX.writeFile(wb, 'MauNhapLieuChiBo.xlsx');
+}
+
+export function parseXlsxFileChiBo(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        let sheetName = workbook.SheetNames[0];
+        if (workbook.SheetNames.includes('Danh Sách Chi Bộ')) {
+          sheetName = 'Danh Sách Chi Bộ';
+        }
+        if (workbook.SheetNames.includes('Mẫu Nhập Liệu') && workbook.SheetNames.length === 1) {
+          sheetName = 'Mẫu Nhập Liệu';
+        }
+
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        if (!jsonData || jsonData.length === 0) {
+          reject(new Error('File không có dữ liệu!'));
+          return;
+        }
+
+        const parsed = [];
+        const errors = [];
+
+        jsonData.forEach((row, idx) => {
+          const keys = Object.keys(row);
+          if (keys.length === 1 && String(row[keys[0]]).startsWith('LƯU Ý')) return;
+          if (String(row[keys[0]]).startsWith('LƯU Ý')) return;
+
+          const ten = String(
+            row['Tên Chi bộ / Đảng bộ'] || row['Tên Chi bộ'] || row['Chi bộ'] || ''
+          ).trim();
+          const biThu = String(row['Bí thư'] || '').trim();
+          const chanhVanPhong = String(row['Chánh Văn phòng'] || row['CVP'] || '').trim();
+          const soDienThoai = String(row['Số điện thoại'] || row['SĐT'] || '').trim();
+          const email = String(row['Email'] || '').trim();
+
+          const rowNum = idx + 2;
+          if (!ten) {
+            errors.push(`Hàng ${rowNum}: Thiếu tên Chi bộ / Đảng bộ`);
+            return;
+          }
+
+          if (parsed.some((p) => p.ten === ten)) {
+            errors.push(`Hàng ${rowNum}: Tên Chi bộ "${ten}" bị trùng trong file`);
+            return;
+          }
+
+          parsed.push({ ten, biThu, chanhVanPhong, soDienThoai, email });
+        });
+
+        resolve({ data: parsed, errors });
+      } catch (err) {
+        reject(new Error('Không thể đọc file Excel: ' + err.message));
+      }
+    };
+    reader.onerror = () => reject(new Error('Lỗi khi đọc file!'));
+    reader.readAsArrayBuffer(file);
+  });
+}

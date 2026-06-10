@@ -13,6 +13,11 @@ import {
   updateProcessTemplatesOrder,
   syncProcessTemplatesWithApplicants,
 } from '../lib/apiClient';
+import {
+  exportChiBoToXlsx,
+  exportImportTemplateChiBo,
+  parseXlsxFileChiBo
+} from '../lib/excelUtils';
 
 // =============================================
 // Danh Mục Tab Component
@@ -40,6 +45,10 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
   const [deletingChiBo, setDeletingChiBo] = useState(null); // string (tên)
   const [chiBoSearch, setChiBoSearch] = useState('');
   const [stepSearch, setStepSearch] = useState('');
+
+  // ---- Import state ----
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
   // ---- Load data ----
   const loadSteps = useCallback(async () => {
@@ -152,6 +161,55 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
   // =============================================
   // CHI BỘ HANDLERS
   // =============================================
+  const handleFileSelectChiBo = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportResult(null);
+    setIsImporting(true);
+    onAlert({ type: 'info', message: '⏳ Đang đọc file Excel...' });
+
+    try {
+      const { data, errors } = await parseXlsxFileChiBo(file);
+      
+      if (data.length === 0 && errors.length === 0) {
+        throw new Error('File không có dữ liệu hợp lệ.');
+      }
+
+      let successCount = 0;
+      const details = [...errors];
+
+      if (data.length > 0) {
+        onAlert({ type: 'info', message: `⏳ Đang nhập ${data.length} Chi bộ/Đảng bộ...` });
+        for (const row of data) {
+          try {
+            await createChiBo(row);
+            successCount++;
+          } catch (err) {
+            details.push(`Lỗi dòng "${row.ten}": ${err.message}`);
+          }
+        }
+        
+        setChiBoList(await fetchChiBoList());
+        if (onChiBoChanged) onChiBoChanged();
+      }
+
+      setImportResult({ successCount, errorCount: details.length, details });
+      
+      if (details.length === 0) {
+        onAlert({ type: 'success', message: `✅ Đã nhập thành công ${successCount} đơn vị.` });
+      } else {
+        onAlert({ type: 'warning', message: `Đã nhập ${successCount} đơn vị. Có ${details.length} lỗi (xem chi tiết).` });
+      }
+
+    } catch (err) {
+      onAlert({ type: 'error', message: err.message });
+    } finally {
+      setIsImporting(false);
+      e.target.value = ''; // Reset file input
+    }
+  };
+
   const handleAddChiBo = async (e) => {
     e.preventDefault();
     try {
@@ -414,7 +472,54 @@ export default function DanhMucTab({ onAlert, onChiBoChanged, onReload }) {
                 Quản lý danh sách chi bộ, đảng bộ cơ sở cùng thông tin liên hệ. Danh sách này được dùng để phân loại hồ sơ quần chúng.
               </p>
             </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button 
+                className="btn btn-secondary btn-sm" 
+                onClick={() => exportImportTemplateChiBo()}
+                title="Tải file Excel mẫu để nhập dữ liệu"
+              >
+                📥 Tải file mẫu
+              </button>
+              
+              <label className={`btn btn-secondary btn-sm ${isImporting ? 'disabled' : ''}`} style={{ cursor: isImporting ? 'not-allowed' : 'pointer' }}>
+                {isImporting ? '⏳ Đang xử lý...' : '📤 Nhập từ Excel'}
+                <input 
+                  type="file" 
+                  accept=".xlsx,.xls" 
+                  style={{ display: 'none' }} 
+                  onChange={handleFileSelectChiBo}
+                  disabled={isImporting}
+                />
+              </label>
+
+              <button 
+                className="btn btn-secondary btn-sm" 
+                onClick={() => exportChiBoToXlsx(chiBoList)}
+                title="Xuất toàn bộ danh sách hiện tại ra Excel"
+                disabled={chiBoList.length === 0}
+              >
+                📊 Xuất Excel
+              </button>
+            </div>
           </div>
+
+          {/* Import Result Panel */}
+          {importResult && (
+            <div className={`alert ${importResult.errorCount > 0 ? 'alert-warning' : 'alert-success'}`} style={{ marginBottom: '1rem' }}>
+              <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
+                Kết quả nhập dữ liệu:
+                ✅ {importResult.successCount} thành công 
+                {importResult.errorCount > 0 && ` | ❌ ${importResult.errorCount} lỗi`}
+              </div>
+              {importResult.details.length > 0 && (
+                <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.85rem' }}>
+                  {importResult.details.map((err, i) => (
+                    <li key={i}>{err}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           {/* Add form */}
           <div className="danhmuc-add-card">
