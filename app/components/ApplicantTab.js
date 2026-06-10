@@ -87,6 +87,10 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
   const [importErrors, setImportErrors] = useState([]);
   const [importLoading, setImportLoading] = useState(false);
 
+  // ---- Approval State ----
+  const [showRejectModal, setShowRejectModal] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+
   // Form
   const [formData, setFormData] = useState({
     cccd: '', hoTen: '', ngaySinh: '', soDienThoai: '', email: '', chiBoDangBo: '',
@@ -153,8 +157,12 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
         await updateApplicantAPI(editingApplicant.id, formData);
         onAlert({ type: 'success', message: 'Cập nhật thông tin thành công!' });
       } else {
-        await createApplicant(formData);
-        onAlert({ type: 'success', message: 'Thêm quần chúng mới thành công!' });
+        await createApplicant({
+          ...formData,
+          nguoiTaoEmail: currentUser?.email || '',
+          role: currentUser?.role || ''
+        });
+        onAlert({ type: 'success', message: 'Thêm hồ sơ mới thành công!' });
       }
       setShowApplicantModal(false);
       onReload();
@@ -168,6 +176,30 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
     setShowDeleteConfirm(null);
     onReload();
     onAlert({ type: 'success', message: 'Đã xóa hồ sơ thành công!' });
+  };
+
+  // ---- Approval logic ----
+  const handleApprove = async (id) => {
+    try {
+      await updateApplicantAPI(id, { trangThaiDuyet: 'da_duyet' });
+      onAlert({ type: 'success', message: 'Đã duyệt hồ sơ!' });
+      onReload();
+    } catch (err) {
+      onAlert({ type: 'error', message: err.message });
+    }
+  };
+
+  const executeReject = async (e) => {
+    e.preventDefault();
+    try {
+      await updateApplicantAPI(showRejectModal.id, { trangThaiDuyet: 'tu_choi', lyDoTuChoi: rejectReason });
+      onAlert({ type: 'success', message: 'Đã từ chối hồ sơ!' });
+      setShowRejectModal(null);
+      setRejectReason('');
+      onReload();
+    } catch (err) {
+      onAlert({ type: 'error', message: err.message });
+    }
   };
 
   // ---- Process update ----
@@ -239,7 +271,14 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
     const failed = [];
     for (const row of importPreview) {
       if (isThanhVien) row.chiBoDangBo = currentUser.chiBoDangBo;
-      try { await createApplicant(row); success++; }
+      try { 
+        await createApplicant({
+          ...row,
+          nguoiTaoEmail: currentUser?.email || '',
+          role: currentUser?.role || ''
+        }); 
+        success++; 
+      }
       catch (err) { failed.push(`${row.hoTen}: ${err.message}`); }
     }
     onReload();
@@ -389,7 +428,14 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
                       <td style={{ fontSize: 'var(--text-xs)' }}>{a.soDienThoai}</td>
                       <td style={{ fontSize: 'var(--text-xs)' }}>{a.chiBoDangBo}</td>
                       <td>
-                        {isCancelled ? (
+                        {a.trangThaiDuyet === 'cho_duyet' ? (
+                          <span className="status-badge" style={{ backgroundColor: '#fff3cd', color: '#856404' }}>⏳ Chờ duyệt</span>
+                        ) : a.trangThaiDuyet === 'tu_choi' ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span className="status-badge status-huy_ho_so">❌ Từ chối</span>
+                            {a.lyDoTuChoi && <span style={{ fontSize: '10px', color: 'var(--color-danger)' }}>Lý do: {a.lyDoTuChoi}</span>}
+                          </div>
+                        ) : isCancelled ? (
                           <span className="status-badge status-huy_ho_so">✕ Hồ sơ bị từ chối</span>
                         ) : (
                           <div className="step-progress-cell">
@@ -406,10 +452,18 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
                       </td>
                       <td>
                         <div className="table-actions">
-                          {userIsAdmin && (
+                          {(!isThanhVien && a.trangThaiDuyet === 'cho_duyet') && (
+                            <>
+                              <button className="btn btn-sm btn-success" onClick={() => handleApprove(a.id)} title="Duyệt">✅</button>
+                              <button className="btn btn-sm btn-danger" onClick={() => setShowRejectModal(a)} title="Từ chối">❌</button>
+                            </>
+                          )}
+                          {(userIsAdmin || a.trangThaiDuyet !== 'cho_duyet') && (
                             <button className="btn btn-sm btn-secondary" onClick={() => openEdit(a)} title="Sửa">✏️</button>
                           )}
-                          <button className="btn btn-sm btn-secondary" onClick={() => openProcess(a)} title="Quy trình">📋</button>
+                          {a.trangThaiDuyet === 'da_duyet' && (
+                            <button className="btn btn-sm btn-secondary" onClick={() => openProcess(a)} title="Tiến độ hồ sơ">📋</button>
+                          )}
                           {userIsAdmin && (
                             <button className="btn btn-sm btn-danger" onClick={() => setShowDeleteConfirm(a.id)} title="Xóa">🗑️</button>
                           )}
@@ -577,6 +631,35 @@ export default function ApplicantTab({ applicants, chiBoList, userIsAdmin, curre
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setShowProcessModal(false)}>Đóng</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====== REJECT MODAL ====== */}
+      {showRejectModal && (
+        <div className="modal-overlay">
+          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>❌ Từ chối hồ sơ</h3>
+              <button className="modal-close" onClick={() => { setShowRejectModal(null); setRejectReason(''); }}>✕</button>
+            </div>
+            <form onSubmit={executeReject}>
+              <div className="modal-body">
+                <p style={{ marginBottom: '1rem' }}>Vui lòng nhập lý do từ chối hồ sơ của <strong>{showRejectModal.hoTen}</strong>:</p>
+                <textarea
+                  className="form-input"
+                  style={{ width: '100%', minHeight: '100px' }}
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Hồ sơ thiếu thông tin, CCCD không hợp lệ..."
+                  required
+                />
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowRejectModal(null); setRejectReason(''); }}>Hủy</button>
+                <button type="submit" className="btn btn-danger">Xác nhận từ chối</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

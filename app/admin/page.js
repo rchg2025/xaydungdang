@@ -592,13 +592,17 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="tabs">
           <button className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => changeTab('dashboard')} id="tab-dashboard">📊 Tổng quan</button>
-          <button className={`tab-btn ${activeTab === 'applicants' ? 'active' : ''}`} onClick={() => changeTab('applicants')} id="tab-applicants">👥 Quần chúng</button>
-          <button className={`tab-btn ${activeTab === 'processes' ? 'active' : ''}`} onClick={() => changeTab('processes')} id="tab-processes">📋 Quy trình</button>
-          {userIsAdmin && (
+          <button className={`tab-btn ${activeTab === 'applicants' ? 'active' : ''}`} onClick={() => changeTab('applicants')} id="tab-applicants">👥 Danh sách Quần chúng</button>
+          {!isThanhVien && (
             <>
-              <button className={`tab-btn ${activeTab === 'danhmuc' ? 'active' : ''}`} onClick={() => changeTab('danhmuc')} id="tab-danhmuc">🗂️ Danh mục</button>
-              <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => changeTab('users')} id="tab-users">👤 Thành viên</button>
-              <button className={`tab-btn ${activeTab === 'email' ? 'active' : ''}`} onClick={() => changeTab('email')} id="tab-email">📧 Email</button>
+              <button className={`tab-btn ${activeTab === 'processes' ? 'active' : ''}`} onClick={() => changeTab('processes')} id="tab-processes">⚙️ Tiến độ hồ sơ</button>
+              {userIsAdmin && (
+                <>
+                  <button className={`tab-btn ${activeTab === 'danhmuc' ? 'active' : ''}`} onClick={() => changeTab('danhmuc')} id="tab-danhmuc">🗂️ Danh mục</button>
+                  <button className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`} onClick={() => changeTab('users')} id="tab-users">👤 Thành viên</button>
+                  <button className={`tab-btn ${activeTab === 'email' ? 'active' : ''}`} onClick={() => changeTab('email')} id="tab-email">📧 Email</button>
+                </>
+              )}
             </>
           )}
         </div>

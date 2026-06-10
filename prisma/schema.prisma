@@ -51,17 +51,20 @@ model ChiBo {
 }
 
 model Applicant {
-  id           String             @id @default(cuid())
-  cccd         String             @unique
-  hoTen        String
-  ngaySinh     String
-  soDienThoai  String?            @default("")
-  email        String?            @default("")
-  chiBoDangBo  String
-  ngayTao      String
-  quyTrinh     ProcessStep[]
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  id             String        @id @default(cuid())
+  cccd           String        @unique
+  hoTen          String
+  ngaySinh       String
+  soDienThoai    String?       @default("")
+  email          String?       @default("")
+  chiBoDangBo    String
+  ngayTao        String
+  trangThaiDuyet String        @default("da_duyet") // cho_duyet, da_duyet, tu_choi
+  lyDoTuChoi     String?       @default("")
+  nguoiTaoEmail  String?       @default("")
+  quyTrinh       ProcessStep[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model ProcessStep {
