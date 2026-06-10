@@ -86,7 +86,7 @@ export default function HomePage() {
 
       {/* Public Stats */}
       {stats && (
-        <section style={{ maxWidth: '960px', margin: '0 auto', padding: '0 1.5rem 1.5rem' }}>
+        <section style={{ maxWidth: '100%', margin: '0 auto', padding: '0 1.5rem 1.5rem' }}>
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-card-icon" style={{ background: 'rgba(59,130,246,0.12)', color: '#60a5fa', boxShadow: '0 0 0 1px rgba(59,130,246,0.2)' }}>📁</div>
