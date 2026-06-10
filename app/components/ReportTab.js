@@ -203,17 +203,17 @@ export default function ReportTab({ applicants, chiBoList, currentUser }) {
         </div>
 
         {/* 3. Danh sách kết quả */}
-        <div className="table-responsive">
-            <table className="table">
+        <div className="data-table-wrapper">
+          <table className="data-table">
               <thead>
                 <tr>
-                  <th>STT</th>
-                  <th>Họ và Tên</th>
+                  <th>#</th>
+                  <th>HỌ TÊN</th>
                   <th>CCCD</th>
-                  <th>Chi bộ / Đảng bộ</th>
-                  <th>Ngày nộp</th>
-                  <th>Bước hiện tại</th>
-                  <th>Tình trạng</th>
+                  <th>CHI BỘ/ĐẢNG BỘ</th>
+                  <th>NGÀY NỘP</th>
+                  <th>TIẾN ĐỘ</th>
+                  <th>TÌNH TRẠNG</th>
                 </tr>
               </thead>
               <tbody>
@@ -232,11 +232,19 @@ export default function ReportTab({ applicants, chiBoList, currentUser }) {
                       <tr key={a.id}>
                         <td>{i + 1}</td>
                         <td style={{ fontWeight: '600' }}>{a.hoTen}</td>
-                        <td><code>{a.cccd}</code></td>
-                        <td style={{ fontSize: '13px' }}>{a.chiBoDangBo}</td>
-                        <td>{a.ngayTao}</td>
-                        <td style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--color-primary)' }}>
-                          {st === 'huy_ho_so' ? 'Bị từ chối' : `Bước ${currentStep}/${totalSteps}`}
+                        <td style={{ fontSize: 'var(--text-xs)' }}>{a.cccd}</td>
+                        <td style={{ fontSize: 'var(--text-xs)' }}>{a.chiBoDangBo}</td>
+                        <td style={{ fontSize: 'var(--text-xs)' }}>{new Date(a.ngayTao).toLocaleDateString('vi-VN')}</td>
+                        <td>
+                          {st === 'huy_ho_so' ? (
+                            <span className="status-badge status-huy_ho_so">✕ Bị từ chối</span>
+                          ) : (
+                            <div className="step-progress-cell">
+                              <span className="status-badge status-dang_xu_ly">
+                                Bước {currentStep}/{totalSteps}
+                              </span>
+                            </div>
+                          )}
                         </td>
                         <td>
                           {st === 'hoan_thanh' && <span className="status-badge status-done">Hoàn thành</span>}
