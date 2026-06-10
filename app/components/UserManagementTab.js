@@ -10,6 +10,7 @@ import {
   ROLE_LABELS,
   SUPERADMIN_USERNAME,
 } from '../lib/apiClient';
+import { exportUsersToXlsx, exportImportTemplateUser, parseXlsxFileUser } from '../lib/excelUtils';
 
 // =============================================
 // User Management Tab Component (Admin only)
@@ -21,6 +22,15 @@ export default function UserManagementTab({ onAlert, currentUser, chiBoList = []
   const [deletingUser, setDeletingUser] = useState(null);
   const [resetUser, setResetUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // ---- Excel Import State ----
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importData, setImportData] = useState([]);
+  const [importErrors, setImportErrors] = useState([]);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importSuccess, setImportSuccess] = useState(0);
+  const [importFailed, setImportFailed] = useState(0);
 
   // ---- Form state ----
   const [formData, setFormData] = useState({
@@ -50,6 +60,119 @@ export default function UserManagementTab({ onAlert, currentUser, chiBoList = []
       u.username.toLowerCase().includes(t) ||
       (u.email || '').toLowerCase().includes(t);
   });
+
+  // ---- Excel Handlers ----
+  const handleExportList = async () => {
+    try {
+      await exportUsersToXlsx(filtered);
+      onAlert({ type: 'success', message: 'Đã xuất file Excel danh sách thành viên!' });
+    } catch (err) {
+      onAlert({ type: 'error', message: err.message });
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      await exportImportTemplateUser('');
+      onAlert({ type: 'success', message: 'Đã tải file mẫu nhập liệu!' });
+    } catch (err) {
+      onAlert({ type: 'error', message: err.message });
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImportFile(file);
+    try {
+      const { data, errors } = await parseXlsxFileUser(file);
+      setImportData(data);
+      setImportErrors(errors);
+      setImportSuccess(0);
+      setImportFailed(0);
+    } catch (err) {
+      onAlert({ type: 'error', message: err.message });
+      setImportFile(null);
+    }
+    e.target.value = '';
+  };
+
+  const closeImport = () => {
+    if (importLoading) return;
+    setShowImportModal(false);
+    setImportFile(null);
+    setImportData([]);
+    setImportErrors([]);
+    setImportSuccess(0);
+    setImportFailed(0);
+  };
+
+  const executeImport = async () => {
+    if (importData.length === 0) return;
+    setImportLoading(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const row of importData) {
+      try {
+        await createUser({
+          hoTen: row.hoTen,
+          username: row.username,
+          password: row.password,
+          email: row.email,
+          role: row.role,
+          chiBoDangBo: row.chiBoDangBo
+        });
+        successCount++;
+        
+        // Gửi email
+        if (row.email) {
+          try {
+            const loginUrl = window.location.origin;
+            await fetch('/api/send-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: row.email.trim(),
+                toName: row.hoTen,
+                subject: 'THÔNG BÁO TẠO TÀI KHOẢN MỚI - HỆ THỐNG XÂY DỰNG ĐẢNG',
+                message: \`Kính gửi \${row.hoTen},
+
+Tài khoản truy cập Hệ thống Quản lý và Tiếp nhận hồ sơ Xây dựng Đảng của bạn đã được tạo thành công.
+
+Dưới đây là thông tin đăng nhập của bạn:
+- Tên đăng nhập: \${row.username}
+- Mật khẩu: \${row.password}
+- Vai trò: \${ROLE_LABELS[row.role] || row.role}
+\${row.chiBoDangBo ? \`- Chi bộ/Đảng bộ quản lý: \${row.chiBoDangBo}\\n\` : ''}- Đường dẫn truy cập: \${loginUrl}
+
+Vui lòng đăng nhập vào hệ thống để bắt đầu công việc. (Bạn có thể đổi mật khẩu nếu cần thiết).
+
+Trân trọng,
+Quản trị viên Hệ thống\`
+              })
+            });
+          } catch (emailErr) {
+            console.error("Lỗi gửi email tạo tài khoản import:", emailErr);
+          }
+        }
+      } catch (err) {
+        failCount++;
+        setImportErrors(prev => [...prev, \`Lỗi tạo "\${row.username}": \${err.message}\`]);
+      }
+    }
+
+    setImportSuccess(successCount);
+    setImportFailed(failCount);
+    setImportLoading(false);
+    await loadUsers();
+    
+    if (failCount === 0) {
+      onAlert({ type: 'success', message: \`Đã nhập thành công \${successCount} thành viên!\` });
+    } else {
+      onAlert({ type: 'warning', message: \`Nhập xong: \${successCount} thành công, \${failCount} lỗi.\` });
+    }
+  };
 
   // ---- Handlers ----
   const handleAdd = async (e) => {
@@ -166,16 +289,21 @@ Quản trị viên Hệ thống`
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button
-          className="btn btn-accent"
-          onClick={() => {
-            setFormData({ username: '', hoTen: '', email: '', role: ROLES.BIEN_TAP_VIEN, password: '', chiBoDangBo: '' });
-            setShowAddModal(true);
-          }}
-          id="btn-add-user"
-        >
-          ＋ Thêm thành viên
-        </button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button className="btn btn-secondary" onClick={handleDownloadTemplate} title="Tải mẫu Excel trống">⬇️ Tải mẫu</button>
+          <button className="btn btn-secondary" onClick={() => setShowImportModal(true)} title="Nhập danh sách từ Excel">📥 Nhập Excel</button>
+          <button className="btn btn-secondary" onClick={handleExportList} title="Xuất danh sách ra Excel">📤 Xuất Excel</button>
+          <button
+            className="btn btn-accent"
+            onClick={() => {
+              setFormData({ username: '', hoTen: '', email: '', role: ROLES.BIEN_TAP_VIEN, password: '', chiBoDangBo: '' });
+              setShowAddModal(true);
+            }}
+            id="btn-add-user"
+          >
+            ＋ Thêm thành viên
+          </button>
+        </div>
       </div>
 
       {/* Users list */}
@@ -524,6 +652,88 @@ Quản trị viên Hệ thống`
           </div>
         </div>
       )}
+
+      {/* ====== IMPORT MODAL ====== */}
+      {showImportModal && (
+        <div className="modal-overlay">
+          <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>📥 Nhập danh sách Thành viên từ Excel</h3>
+              {!importLoading && <button className="modal-close" onClick={closeImport}>✕</button>}
+            </div>
+            <div className="modal-body">
+              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+                Vui lòng tải <a href="#" onClick={(e) => { e.preventDefault(); handleDownloadTemplate(); }} style={{ color: 'var(--color-accent)' }}>file mẫu</a>, điền thông tin và upload file (<b>.xlsx</b>).
+              </p>
+              
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleFileChange}
+                disabled={importLoading}
+                style={{ marginBottom: '1rem' }}
+              />
+
+              {importFile && (
+                <div style={{ padding: '1rem', background: 'var(--color-bg-secondary)', borderRadius: '8px', marginBottom: '1rem' }}>
+                  <h4 style={{ margin: '0 0 8px 0' }}>Dữ liệu hợp lệ: <span style={{ color: 'var(--color-success)' }}>{importData.length}</span></h4>
+                  {importData.length > 0 && (
+                    <div style={{ maxHeight: '150px', overflowY: 'auto', fontSize: 'var(--text-xs)' }}>
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>Họ tên</th>
+                            <th>Username</th>
+                            <th>Vai trò</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {importData.slice(0, 5).map((r, i) => (
+                            <tr key={i}>
+                              <td>{r.hoTen}</td>
+                              <td>{r.username}</td>
+                              <td>{ROLE_LABELS[r.role] || r.role}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {importData.length > 5 && <div style={{ textAlign: 'center', padding: '4px', color: 'var(--color-text-muted)' }}>... và {importData.length - 5} thành viên khác</div>}
+                    </div>
+                  )}
+
+                  <h4 style={{ margin: '16px 0 8px 0', color: importErrors.length > 0 ? 'var(--color-danger)' : 'var(--color-success)' }}>
+                    Lỗi dữ liệu: {importErrors.length}
+                  </h4>
+                  {importErrors.length > 0 && (
+                    <div style={{ maxHeight: '150px', overflowY: 'auto', fontSize: 'var(--text-xs)', color: 'var(--color-danger)', background: 'var(--color-danger-muted)', padding: '8px', borderRadius: '4px' }}>
+                      <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                        {importErrors.map((err, i) => <li key={i} style={{ marginBottom: '4px' }}>{err}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {(importSuccess > 0 || importFailed > 0) && (
+                    <div style={{ marginTop: '16px', padding: '12px', background: 'var(--color-bg-alt)', borderRadius: '8px' }}>
+                      <p style={{ margin: '0 0 4px 0', fontWeight: 'bold' }}>Kết quả thực thi:</p>
+                      <p style={{ margin: 0, color: 'var(--color-success)' }}>✅ Thành công: {importSuccess}</p>
+                      <p style={{ margin: 0, color: 'var(--color-danger)' }}>❌ Thất bại: {importFailed}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={closeImport} disabled={importLoading}>Đóng</button>
+              {importData.length > 0 && (
+                <button type="button" className="btn btn-primary" onClick={executeImport} disabled={importLoading}>
+                  {importLoading ? 'Đang xử lý...' : `Tiến hành nhập (${importData.length})`}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

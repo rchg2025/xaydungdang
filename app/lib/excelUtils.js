@@ -410,3 +410,183 @@ export async function parseXlsxFileChiBo(file) {
     reader.readAsArrayBuffer(file);
   });
 }
+
+// =============================================
+// THÀNH VIÊN (USERS) EXPORT & IMPORT
+// =============================================
+
+const EXPORT_HEADERS_USER = [
+  'STT',
+  'Họ tên',
+  'Tên đăng nhập',
+  'Email',
+  'Vai trò',
+  'Chi bộ / Đảng bộ',
+  'Trạng thái',
+  'Ngày tạo'
+];
+
+export const IMPORT_TEMPLATE_HEADERS_USER = [
+  'Họ tên',
+  'Tên đăng nhập',
+  'Mật khẩu',
+  'Email',
+  'Vai trò',
+  'Chi bộ / Đảng bộ'
+];
+
+export async function exportUsersToXlsx(users) {
+  const XLSX = await import('xlsx');
+  
+  // ROLE_LABELS logic (can be hardcoded here or imported, we'll just map manually)
+  const getRoleLabel = (role) => {
+    if (role === 'admin') return 'Quản trị viên';
+    if (role === 'bien_tap_vien') return 'Biên tập viên';
+    if (role === 'thanh_vien') return 'Thành viên';
+    return role;
+  };
+
+  const rows = users.map((u, i) => ({
+    STT: i + 1,
+    'Họ tên': u.hoTen || '',
+    'Tên đăng nhập': u.username || '',
+    'Email': u.email || '',
+    'Vai trò': getRoleLabel(u.role),
+    'Chi bộ / Đảng bộ': u.chiBoDangBo || '',
+    'Trạng thái': u.active ? 'Hoạt động' : 'Vô hiệu hóa',
+    'Ngày tạo': new Date(u.ngayTao).toLocaleDateString('vi-VN')
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows, { header: EXPORT_HEADERS_USER });
+  ws['!cols'] = [
+    { wch: 5 },   // STT
+    { wch: 25 },  // Họ tên
+    { wch: 20 },  // Tên đăng nhập
+    { wch: 30 },  // Email
+    { wch: 20 },  // Vai trò
+    { wch: 40 },  // Chi bộ
+    { wch: 15 },  // Trạng thái
+    { wch: 15 },  // Ngày tạo
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Danh Sach Thanh Vien');
+
+  const today = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `DanhSachThanhVien_${today}.xlsx`);
+}
+
+export async function exportImportTemplateUser(chiBoDangBo = '') {
+  const XLSX = await import('xlsx');
+  const templateRows = [
+    {
+      'Họ tên': 'Nguyễn Văn A',
+      'Tên đăng nhập': 'nguyenvana',
+      'Mật khẩu': '123456',
+      'Email': 'nguyenvana@example.com',
+      'Vai trò': 'thanh_vien',
+      'Chi bộ / Đảng bộ': chiBoDangBo,
+    },
+    {
+      'Họ tên': 'Trần Thị B',
+      'Tên đăng nhập': 'tranthib',
+      'Mật khẩu': '123456',
+      'Email': 'tranthib@example.com',
+      'Vai trò': 'bien_tap_vien',
+      'Chi bộ / Đảng bộ': '',
+    }
+  ];
+  const ws = XLSX.utils.json_to_sheet(templateRows, { header: IMPORT_TEMPLATE_HEADERS_USER });
+  ws['!cols'] = [
+    { wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 40 },
+  ];
+
+  const note = XLSX.utils.aoa_to_sheet([
+    ['LƯU Ý: Vai trò chỉ được điền: admin, bien_tap_vien, thanh_vien. Nếu vai trò là thanh_vien thì BẮT BUỘC phải có Tên Chi bộ / Đảng bộ.'],
+    IMPORT_TEMPLATE_HEADERS_USER,
+  ]);
+  note['!cols'] = [{ wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 40 }];
+  note['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, note, 'Mau Nhap Lieu');
+  XLSX.writeFile(wb, 'MauNhapLieuThanhVien.xlsx');
+}
+
+export async function parseXlsxFileUser(file) {
+  const XLSX = await import('xlsx');
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        let sheetName = workbook.SheetNames[0];
+        if (workbook.SheetNames.includes('Danh Sach Thanh Vien')) {
+          sheetName = 'Danh Sach Thanh Vien';
+        }
+        if (workbook.SheetNames.includes('Mau Nhap Lieu') && workbook.SheetNames.length === 1) {
+          sheetName = 'Mau Nhap Lieu';
+        }
+
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        if (!jsonData || jsonData.length === 0) {
+          reject(new Error('File không có dữ liệu!'));
+          return;
+        }
+
+        const parsed = [];
+        const errors = [];
+
+        jsonData.forEach((row, idx) => {
+          const keys = Object.keys(row);
+          if (keys.length === 1 && String(row[keys[0]]).startsWith('LƯU Ý')) return;
+          if (String(row[keys[0]]).startsWith('LƯU Ý')) return;
+
+          const hoTen = String(row['Họ tên'] || row['Ho ten'] || row['Họ và Tên'] || '').trim();
+          const username = String(row['Tên đăng nhập'] || row['Username'] || '').trim();
+          const password = String(row['Mật khẩu'] || row['Password'] || '').trim();
+          const email = String(row['Email'] || '').trim();
+          const roleRaw = String(row['Vai trò'] || row['Vai tro'] || row['Role'] || '').trim().toLowerCase();
+          const chiBoDangBo = String(row['Chi bộ / Đảng bộ'] || row['Chi bo'] || '').trim();
+
+          const rowNum = idx + 2;
+          
+          if (!hoTen) { errors.push(`Hàng ${rowNum}: Thiếu Họ tên`); return; }
+          if (!username) { errors.push(`Hàng ${rowNum}: Thiếu Tên đăng nhập`); return; }
+          if (!password) { errors.push(`Hàng ${rowNum}: Thiếu Mật khẩu`); return; }
+          
+          let role = 'bien_tap_vien';
+          if (roleRaw === 'admin' || roleRaw === 'quản trị viên') role = 'admin';
+          else if (roleRaw === 'thanh_vien' || roleRaw === 'thành viên') role = 'thanh_vien';
+          else if (roleRaw === 'bien_tap_vien' || roleRaw === 'biên tập viên') role = 'bien_tap_vien';
+          else {
+            errors.push(`Hàng ${rowNum}: Vai trò không hợp lệ (admin, bien_tap_vien, thanh_vien)`);
+            return;
+          }
+
+          if (role === 'thanh_vien' && !chiBoDangBo) {
+            errors.push(`Hàng ${rowNum}: Vai trò "thanh_vien" bắt buộc phải có Chi bộ / Đảng bộ`);
+            return;
+          }
+
+          if (parsed.some((p) => p.username === username)) {
+            errors.push(`Hàng ${rowNum}: Tên đăng nhập "${username}" bị trùng lặp trong file`);
+            return;
+          }
+
+          parsed.push({ hoTen, username, password, email, role, chiBoDangBo });
+        });
+
+        resolve({ data: parsed, errors });
+      } catch (err) {
+        reject(new Error('Không thể đọc file Excel: ' + err.message));
+      }
+    };
+    reader.onerror = () => reject(new Error('Lỗi khi đọc file!'));
+    reader.readAsArrayBuffer(file);
+  });
+}
