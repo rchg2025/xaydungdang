@@ -266,10 +266,10 @@ Quản trị viên Hệ thống`
     setFormData({ username: user.username, hoTen: user.hoTen, email: user.email || '', role: user.role, password: '', chiBoDangBo: user.chiBoDangBo || '' });
   };
 
-  const handleToggleActive = (user) => {
+  const handleToggleActive = async (user) => {
     try {
-      updateUser(user.id, { active: !user.active });
-      loadUsers();
+      await updateUserAPI(user.id, { active: !user.active });
+      await loadUsers();
       onAlert({ type: 'success', message: user.active ? 'Đã vô hiệu hóa tài khoản!' : 'Đã kích hoạt tài khoản!' });
     } catch (err) {
       onAlert({ type: 'error', message: err.message });
