@@ -37,6 +37,17 @@ export default function UserManagementTab({ onAlert, currentUser, chiBoList = []
     username: '', hoTen: '', email: '', role: ROLES.BIEN_TAP_VIEN, password: '', chiBoDangBo: '',
   });
   const [resetPwd, setResetPwd] = useState('');
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleAvatarChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
 
   // ---- Load ----
   const loadUsers = useCallback(async () => {
@@ -223,11 +234,30 @@ Quản trị viên Hệ thống`
 
   const handleEdit = async (e) => {
     e.preventDefault();
+    setIsUploading(true);
     try {
+      let finalAvatarId = formData.avatar;
+      
+      if (avatarFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', avatarFile);
+        const uploadRes = await fetch('/api/drive/upload', {
+          method: 'POST',
+          body: uploadFormData
+        });
+        if (!uploadRes.ok) {
+           const err = await uploadRes.json();
+           throw new Error(err.error || 'Upload ảnh thất bại');
+        }
+        const data = await uploadRes.json();
+        finalAvatarId = data.fileId;
+      }
+
       await updateUserAPI(editingUser.id, {
         hoTen: formData.hoTen,
         email: formData.email,
         soDienThoai: formData.soDienThoai,
+        avatar: finalAvatarId,
         role: formData.role,
         chiBoDangBo: formData.role === ROLES.THANH_VIEN ? formData.chiBoDangBo : '',
       });
@@ -236,6 +266,8 @@ Quản trị viên Hệ thống`
       onAlert({ type: 'success', message: 'Đã cập nhật thành viên!' });
     } catch (err) {
       onAlert({ type: 'error', message: err.message });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -265,6 +297,8 @@ Quản trị viên Hệ thống`
   const openEdit = (user) => {
     setEditingUser(user);
     setFormData({ username: user.username, hoTen: user.hoTen, email: user.email || '', role: user.role, password: '', chiBoDangBo: user.chiBoDangBo || '', soDienThoai: user.soDienThoai || '', avatar: user.avatar || '' });
+    setAvatarFile(null);
+    setAvatarPreview(null);
   };
 
   const handleToggleActive = async (user) => {
@@ -527,12 +561,17 @@ Quản trị viên Hệ thống`
             <form onSubmit={handleEdit}>
               <div className="modal-body">
                 <div className="form-group" style={{ textAlign: 'center' }}>
-                  <div className={`user-avatar user-avatar-${editingUser.role}`} style={{ width: '80px', height: '80px', fontSize: '32px', margin: '0 auto 1rem auto', overflow: 'hidden', background: 'var(--color-bg-secondary)' }}>
-                    {editingUser.avatar ? (
-                      <img src={`/api/drive/image/${editingUser.avatar}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      (editingUser.hoTen || editingUser.username || 'U').charAt(0).toUpperCase()
-                    )}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                    <div className={`user-avatar user-avatar-${editingUser.role}`} style={{ width: '80px', height: '80px', fontSize: '32px', margin: '0 auto', overflow: 'hidden', background: 'var(--color-bg-secondary)' }}>
+                      {avatarPreview ? (
+                        <img src={avatarPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : formData.avatar ? (
+                        <img src={`/api/drive/image/${formData.avatar}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        (editingUser.hoTen || editingUser.username || 'U').charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleAvatarChange} style={{ fontSize: '12px' }} />
                   </div>
                 </div>
                 <div className="form-row">
@@ -609,7 +648,9 @@ Quản trị viên Hệ thống`
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setEditingUser(null)}>Hủy</button>
-                <button type="submit" className="btn btn-primary">Cập nhật</button>
+                <button type="submit" className="btn btn-primary" disabled={isUploading}>
+                  {isUploading ? 'Đang cập nhật...' : 'Cập nhật'}
+                </button>
               </div>
             </form>
           </div>
