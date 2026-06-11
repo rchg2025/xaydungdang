@@ -156,7 +156,14 @@ export default function AdminPage() {
   // ---- Init ----
   useEffect(() => {
     const user = getCurrentUser();
-    if (user) setCurrentUser(user);
+    if (user) {
+      if (!user.id) {
+        logoutSession(); // Clear stale session from before DB migration
+        setCurrentUser(null);
+      } else {
+        setCurrentUser(user);
+      }
+    }
   }, []);
 
   // ---- Load data ----

@@ -227,6 +227,7 @@ Quản trị viên Hệ thống`
       await updateUserAPI(editingUser.id, {
         hoTen: formData.hoTen,
         email: formData.email,
+        soDienThoai: formData.soDienThoai,
         role: formData.role,
         chiBoDangBo: formData.role === ROLES.THANH_VIEN ? formData.chiBoDangBo : '',
       });
@@ -263,7 +264,7 @@ Quản trị viên Hệ thống`
 
   const openEdit = (user) => {
     setEditingUser(user);
-    setFormData({ username: user.username, hoTen: user.hoTen, email: user.email || '', role: user.role, password: '', chiBoDangBo: user.chiBoDangBo || '' });
+    setFormData({ username: user.username, hoTen: user.hoTen, email: user.email || '', role: user.role, password: '', chiBoDangBo: user.chiBoDangBo || '', soDienThoai: user.soDienThoai || '', avatar: user.avatar || '' });
   };
 
   const handleToggleActive = async (user) => {
@@ -339,7 +340,7 @@ Quản trị viên Hệ thống`
                 {filtered.map((u, i) => (
                   <tr key={u.id} style={{ opacity: u.active ? 1 : 0.5 }}>
                     <td>{i + 1}</td>
-                    <td style={{ fontWeight: 600 }}>
+                    <td style={{ fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => openEdit(u)} title="Xem / Sửa hồ sơ" className="hover-text-primary">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div className={`user-avatar user-avatar-${u.role}`} style={{ overflow: 'hidden' }}>
                           {u.avatar ? (
@@ -348,7 +349,9 @@ Quản trị viên Hệ thống`
                             (u.hoTen || u.username || 'U').charAt(0).toUpperCase()
                           )}
                         </div>
-                        {u.hoTen}
+                        <span style={{ textDecoration: 'underline', textDecorationColor: 'transparent' }} onMouseOver={e => e.target.style.textDecorationColor = 'currentColor'} onMouseOut={e => e.target.style.textDecorationColor = 'transparent'}>
+                          {u.hoTen}
+                        </span>
                       </div>
                     </td>
                     <td><code>{u.username}</code></td>
@@ -523,6 +526,15 @@ Quản trị viên Hệ thống`
             </div>
             <form onSubmit={handleEdit}>
               <div className="modal-body">
+                <div className="form-group" style={{ textAlign: 'center' }}>
+                  <div className={`user-avatar user-avatar-${editingUser.role}`} style={{ width: '80px', height: '80px', fontSize: '32px', margin: '0 auto 1rem auto', overflow: 'hidden', background: 'var(--color-bg-secondary)' }}>
+                    {editingUser.avatar ? (
+                      <img src={`/api/drive/image/${editingUser.avatar}`} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      (editingUser.hoTen || editingUser.username || 'U').charAt(0).toUpperCase()
+                    )}
+                  </div>
+                </div>
                 <div className="form-row">
                   <div className="form-group">
                     <label>Họ tên *</label>
@@ -556,6 +568,16 @@ Quản trị viên Hệ thống`
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
                   </div>
+                  <div className="form-group">
+                    <label>Số điện thoại</label>
+                    <input
+                      type="tel" className="form-input"
+                      value={formData.soDienThoai || ''}
+                      onChange={(e) => setFormData({ ...formData, soDienThoai: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
                   <div className="form-group">
                     <label>Vai trò</label>
                     <select
