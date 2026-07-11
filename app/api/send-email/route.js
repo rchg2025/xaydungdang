@@ -4,6 +4,7 @@
 // =============================================
 
 import nodemailer from 'nodemailer';
+import prisma from '../../lib/prisma';
 
 export async function POST(request) {
   try {
@@ -18,12 +19,20 @@ export async function POST(request) {
       );
     }
 
-    const gmailUser = process.env.GMAIL_USER;
-    const gmailPass = process.env.GMAIL_APP_PASSWORD;
+    // Fetch config from DB
+    const configs = await prisma.systemConfig.findMany({
+      where: { key: { in: ['GMAIL_USER', 'GMAIL_APP_PASSWORD', 'GMAIL_DISPLAY_NAME'] } }
+    });
+    const configMap = {};
+    configs.forEach(c => configMap[c.key] = c.value);
+
+    const gmailUser = configMap['GMAIL_USER'] || process.env.GMAIL_USER;
+    const gmailPass = configMap['GMAIL_APP_PASSWORD'] || process.env.GMAIL_APP_PASSWORD;
+    const gmailDisplayName = configMap['GMAIL_DISPLAY_NAME'] || process.env.GMAIL_DISPLAY_NAME || 'Hệ Thống Tiếp Nhận Và Xử Lý Hồ Sơ Kết Nạp Đảng';
 
     if (!gmailUser || !gmailPass) {
       return Response.json(
-        { error: 'Chưa cấu hình GMAIL_USER và GMAIL_APP_PASSWORD trong biến môi trường!' },
+        { error: 'Chưa cấu hình GMAIL_USER và GMAIL_APP_PASSWORD! Vui lòng cấu hình trong Admin.' },
         { status: 500 }
       );
     }
@@ -39,7 +48,7 @@ export async function POST(request) {
 
     // Send mail
     const mailOptions = {
-      from: `"Hệ Thống Tiếp Nhận Và Xử Lý Hồ Sơ Kết Nạp Đảng" <${gmailUser}>`,
+      from: `"${gmailDisplayName}" <${gmailUser}>`,
       to: to,
       subject: subject,
       text: message,

@@ -5,6 +5,7 @@
 // =============================================
 
 import nodemailer from 'nodemailer';
+import prisma from '../../lib/prisma';
 
 // In-memory store cho OTP (tồn tại trong Node.js process)
 // Key: email, Value: { otp, expiresAt, attempts }
@@ -28,8 +29,16 @@ export async function POST(request) {
       );
     }
 
-    const gmailUser = process.env.GMAIL_USER;
-    const gmailPass = process.env.GMAIL_APP_PASSWORD;
+    // Fetch config from DB
+    const configs = await prisma.systemConfig.findMany({
+      where: { key: { in: ['GMAIL_USER', 'GMAIL_APP_PASSWORD', 'GMAIL_DISPLAY_NAME'] } }
+    });
+    const configMap = {};
+    configs.forEach(c => configMap[c.key] = c.value);
+
+    const gmailUser = configMap['GMAIL_USER'] || process.env.GMAIL_USER;
+    const gmailPass = configMap['GMAIL_APP_PASSWORD'] || process.env.GMAIL_APP_PASSWORD;
+    const gmailDisplayName = configMap['GMAIL_DISPLAY_NAME'] || process.env.GMAIL_DISPLAY_NAME || 'Hệ Thống Xây Dựng Đảng';
 
     if (!gmailUser || !gmailPass || gmailUser === 'your-email@gmail.com') {
       return Response.json(
@@ -129,7 +138,7 @@ export async function POST(request) {
 </html>`;
 
     await transporter.sendMail({
-      from: `"Hệ Thống Xây Dựng Đảng" <${gmailUser}>`,
+      from: `"${gmailDisplayName}" <${gmailUser}>`,
       to: email,
       subject: `[XÂY DỰNG ĐẢNG] Mã OTP đặt lại mật khẩu: ${otp}`,
       html: htmlContent,

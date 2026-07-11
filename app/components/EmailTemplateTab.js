@@ -27,6 +27,58 @@ export default function EmailTemplateTab({ onAlert }) {
   const [testEmail, setTestEmail] = useState('');
   const [testing, setTesting] = useState(false);
   const [showGmailGuide, setShowGmailGuide] = useState(false);
+  
+  // ---- Config state ----
+  const [configData, setConfigData] = useState({
+    GMAIL_USER: '',
+    GMAIL_APP_PASSWORD: '',
+    GMAIL_DISPLAY_NAME: '',
+  });
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [savingConfig, setSavingConfig] = useState(false);
+
+  // ---- Load config ----
+  useEffect(() => {
+    fetchConfig();
+  }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const res = await fetch('/api/db/config');
+      if (!res.ok) throw new Error('Không thể tải cấu hình');
+      const data = await res.json();
+      
+      const newConfig = { ...configData };
+      data.forEach(item => {
+        if (newConfig[item.key] !== undefined) {
+          newConfig[item.key] = item.value;
+        }
+      });
+      setConfigData(newConfig);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingConfig(false);
+    }
+  };
+
+  const handleSaveConfig = async (e) => {
+    e.preventDefault();
+    setSavingConfig(true);
+    try {
+      const res = await fetch('/api/db/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(configData),
+      });
+      if (!res.ok) throw new Error('Lưu cấu hình thất bại');
+      onAlert({ type: 'success', message: 'Lưu cấu hình Gmail thành công!' });
+    } catch (err) {
+      onAlert({ type: 'error', message: err.message });
+    } finally {
+      setSavingConfig(false);
+    }
+  };
 
   // ---- Load template ----
   useEffect(() => {
@@ -139,6 +191,48 @@ export default function EmailTemplateTab({ onAlert }) {
             </div>
           </div>
         </div>
+
+        {/* Config Form */}
+        <form onSubmit={handleSaveConfig} style={{ marginTop: '1.5rem', background: 'var(--bg-subtle)', padding: '1.25rem', borderRadius: '8px' }}>
+          <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <label style={{ fontWeight: 700, fontSize: 'var(--text-sm)' }}>Email gửi đi (GMAIL_USER)</label>
+            <input 
+              type="email" 
+              className="form-input" 
+              placeholder="VD: system.admin@gmail.com"
+              value={configData.GMAIL_USER}
+              onChange={(e) => setConfigData({ ...configData, GMAIL_USER: e.target.value })}
+            />
+          </div>
+          
+          <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <label style={{ fontWeight: 700, fontSize: 'var(--text-sm)' }}>Mật khẩu ứng dụng (GMAIL_APP_PASSWORD)</label>
+            <input 
+              type="password" 
+              className="form-input" 
+              placeholder="16 ký tự, viết liền không khoảng cách"
+              value={configData.GMAIL_APP_PASSWORD}
+              onChange={(e) => setConfigData({ ...configData, GMAIL_APP_PASSWORD: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <label style={{ fontWeight: 700, fontSize: 'var(--text-sm)' }}>Tên hiển thị khi gửi (GMAIL_DISPLAY_NAME)</label>
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="VD: Hệ Thống Tiếp Nhận Và Xử Lý Hồ Sơ Kết Nạp Đảng"
+              value={configData.GMAIL_DISPLAY_NAME}
+              onChange={(e) => setConfigData({ ...configData, GMAIL_DISPLAY_NAME: e.target.value })}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button type="submit" className="btn btn-primary" disabled={savingConfig || loadingConfig}>
+              {savingConfig ? '⏳ Đang lưu...' : '💾 Lưu cấu hình Gmail'}
+            </button>
+          </div>
+        </form>
 
         {/* Guide toggle */}
         <button
